@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "J6OShMC2+zhD/hz2Qnu5tj9uIyV6SdaW2p7QSwXaASw=",
+  "Source": "PetShop.API",
+  "BasePath": "_content/PetShop.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
