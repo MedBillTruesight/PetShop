@@ -25,7 +25,7 @@ namespace PetShop.Api.Mapper
                 PickupDate = order.PickupDate,
                 Status = order.Status.ToString(),
                 ActualCost = order.ActualCost,
-                EstimatedCost = order.Pets.Sum(p => p.Price),
+                EstimatedCost = order.Status == Enums.OrderStatus.Delivered ? 0 : order.Pets.Sum(p => p.Price),
                 Pets = order.Pets.Select(p => p.ToDto()).ToList()
             };
         }

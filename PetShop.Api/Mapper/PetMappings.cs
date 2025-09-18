@@ -27,6 +27,7 @@ namespace PetShop.Api.Mapper
                 Kind = dto.Kind,
                 Breed = dto.Breed,
                 Price = dto.Price,
+                Color = dto.Color
             };
         }
         public static Models.Pet ToModel(this Dtos.UpdatePetDto dto, Models.Pet existingPet)

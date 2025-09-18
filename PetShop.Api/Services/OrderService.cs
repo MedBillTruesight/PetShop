@@ -102,7 +102,6 @@ namespace PetShop.Api.Services
                             if (existingPet == null)
                             {
                                 var newPet = petDto.ToModel(null);
-                                newPet.Id = petDto.Id;
                                 order.Pets.Add(newPet);
                                 await _orderRepository.AddPetAsync(newPet);
                             }
@@ -135,8 +134,8 @@ namespace PetShop.Api.Services
 
                     if (dto.Status == OrderStatus.Delivered)
                     {
-                        // move forward to delivered
                         order.Status = OrderStatus.Delivered;
+                        order.ActualCost = order.Pets.Sum(pet => pet.Price);
                     }
                     else if (dto.Status.HasValue && dto.Status != OrderStatus.Processing)
                     {
