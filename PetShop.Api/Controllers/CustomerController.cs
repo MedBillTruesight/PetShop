@@ -20,15 +20,16 @@ namespace PetShop.Api.Controllers
         }
 
         /// <summary>
-        /// Gets a specific customer by ID
+        /// Retrieves a customer by ID.
         /// </summary>
-        /// <param name="id">Customer ID</param>
-        /// <returns>Customer details with payment information</returns>
+        /// <param name="id">The ID of the customer to fetch.</param>
+        /// <returns>
+        /// <see cref="ApiResponse{T}"/> with <see cref="CustomerDto"/> in Data if found.
+        /// Success = false if the customer is not found or an error occurs.
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(ApiResponse<CustomerDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<CustomerDto>> GetCustomer(Guid id)
         {
             try
@@ -63,9 +64,9 @@ namespace PetShop.Api.Controllers
         /// <param name="request">Customer creation data</param>
         /// <returns>Newly created customer</returns>
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(ApiResponse<CustomerDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<CustomerDto>> CreateCustomer([FromBody] CreateCustomerDto request)
         {
             try
@@ -112,10 +113,10 @@ namespace PetShop.Api.Controllers
         /// <param name="request">Customer update data</param>
         /// <returns>Updated customer</returns>
         [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(ApiResponse<CustomerDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<CustomerDto>> UpdateCustomer(Guid id, [FromBody] UpdateCustomerDto request)
         {
             try
