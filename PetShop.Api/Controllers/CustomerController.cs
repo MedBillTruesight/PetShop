@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PetShop.Api.Common;
 using PetShop.Api.Dtos;
 using PetShop.Api.Services;
 using System.ComponentModel.DataAnnotations;
@@ -35,7 +36,7 @@ namespace PetShop.Api.Controllers
                 if (id == Guid.Empty)
                 {
                     _logger.LogWarning("Invalid customer ID: {CustomerId}", id);
-                    return BadRequest("Customer ID must be greater than 0");
+                    return BadRequest(new ApiResponse<string>(null, "Customer ID must be valid",false));
                 }
 
                 _logger.LogInformation("Getting customer with ID: {CustomerId}", id);
@@ -44,15 +45,15 @@ namespace PetShop.Api.Controllers
                 if (customer == null)
                 {
                     _logger.LogWarning("Customer with ID {CustomerId} not found", id);
-                    return NotFound();
+                    return NotFound( new ApiResponse<string>(null,"Customer not found",false));
                 }
 
-                return Ok(customer);
+                return Ok(new ApiResponse<CustomerDto>(customer,"Customer fetched successfully", true));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while getting customer with ID: {CustomerId}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the customer");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>(null, "An error occurred while retrieving the customer",false));
             }
         }
 
@@ -71,33 +72,36 @@ namespace PetShop.Api.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("Invalid customer creation request: {ValidationErrors}",
-                        string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
-                    return BadRequest(ModelState);
+
+                    var errMessage = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    _logger.LogWarning("Invalid customer creation request: {ValidationErrors}", errMessage);
+                    return BadRequest(new ApiResponse<string>(null, errMessage, false));
                 }
 
                 _logger.LogInformation("Creating new customer: {FirstName} {LastName}", request.FirstName, request.LastName);
                 var customer = await _customerService.CreateCustomerAsync(request);
 
-                return CreatedAtAction(
-                    nameof(GetCustomer),
+                var response = new ApiResponse<CustomerDto>(customer, "Customer created successfully");
+
+                return CreatedAtAction(nameof(GetCustomer),
                     new { id = customer.Id },
-                    customer);
+                    response);
             }
             catch (ValidationException ex)
             {
                 _logger.LogWarning(ex, "Validation error while creating customer");
-                return BadRequest(ex.Message);
+                return BadRequest(new ApiResponse<string>(null, ex.Message, false));
             }
             catch (ArgumentException ex)
             {
                 _logger.LogWarning(ex, "Argument error while creating customer");
-                return BadRequest(ex.Message);
+                return BadRequest(new ApiResponse<string>(null, ex.Message, false));
+
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while creating customer");
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the customer");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>(null, "An error occurred while creating the customer", false));
             }
         }
 
@@ -119,14 +123,16 @@ namespace PetShop.Api.Controllers
                 if (id == Guid.Empty)
                 {
                     _logger.LogWarning("Invalid customer ID: {CustomerId}", id);
-                    return BadRequest("Customer ID must be greater than 0");
+                    return BadRequest(new ApiResponse<string>(null, "Customer ID must be valid", false));
+
                 }
 
                 if (!ModelState.IsValid)
                 {
+                    var errMessage = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
                     _logger.LogWarning("Invalid customer update request for ID {CustomerId}: {ValidationErrors}",
-                        id, string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
-                    return BadRequest(ModelState);
+                        id, errMessage);
+                    return BadRequest(new ApiResponse<string>(null, errMessage, false));
                 }
 
                 _logger.LogInformation("Updating customer with ID: {CustomerId}", id);
@@ -134,26 +140,29 @@ namespace PetShop.Api.Controllers
 
                 if (customer == null)
                 {
-                    _logger.LogWarning("Customer with ID {CustomerId} not found for update", id);
-                    return NotFound();
+                    var errMessage = "Customer not found";
+                    _logger.LogWarning(errMessage);
+                    return NotFound(new ApiResponse<string>(null, errMessage, false));
                 }
 
-                return Ok(customer);
+                return Ok(new ApiResponse<CustomerDto>(customer, "Customer created successfully"));
+
             }
             catch (ValidationException ex)
             {
                 _logger.LogWarning(ex, "Validation error while updating customer with ID: {CustomerId}", id);
-                return BadRequest(ex.Message);
+                return BadRequest(new ApiResponse<string>(null, "Validation error while updating customer", false));
             }
             catch (ArgumentException ex)
             {
                 _logger.LogWarning(ex, "Argument error while updating customer with ID: {CustomerId}", id);
-                return BadRequest(ex.Message);
+                return BadRequest(new ApiResponse<string>(null, "Argument error while updating customer", false));
+
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while updating customer with ID: {CustomerId}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the customer");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>(null, "An error occurred while updating the customer", false));
             }
         }
 

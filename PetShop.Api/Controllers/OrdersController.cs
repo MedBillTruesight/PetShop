@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using PetShop.Api.Common;
 using PetShop.Api.Dtos;
 using PetShop.Api.Enums;
 using PetShop.Api.Models;
 using PetShop.Api.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PetShop.Api.Controllers
 {
@@ -23,19 +25,27 @@ namespace PetShop.Api.Controllers
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto request)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            {
+                var errors = string.Join("; ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
+
+                return BadRequest(new ApiResponse<string>(null, errors, false));
+            }
+
             try
             {
                 var orderDto = await _orderService.CreateOrderAsync(request);
 
-                return Created(string.Empty, orderDto);
+                return Created(string.Empty, new ApiResponse<OrderDto>(orderDto, "Order created successfully", true));
 
             }
+
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating order");
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the order");
-
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiResponse<string>(null, "An error occurred while creating the order", false));
             }
         }
 
@@ -46,13 +56,16 @@ namespace PetShop.Api.Controllers
             {
                 var orderDto = await _orderService.GetOrderAsync(orderId);
                 if (orderDto == null)
-                    return NotFound();
-                return Ok(orderDto);
+                    return NotFound(new ApiResponse<string>(null, "Order not found", false));
+
+                return Ok(new ApiResponse<OrderDto>(orderDto, "Order fetched successfully"));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving order");
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the order");
+                _logger.LogError(ex, "Error fetching order");
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiResponse<string>(null, "An error occurred while fetching the order", false));
+
             }
         }
 
@@ -60,20 +73,26 @@ namespace PetShop.Api.Controllers
         public async Task<IActionResult> UpdateOrder(Guid orderId, [FromBody] UpdateOrderDto request)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            {
+                var errors = string.Join("; ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
+                return BadRequest(new ApiResponse<string>(null, errors, false));
+            }
+
             try
             {
                 var orderDto = await _orderService.UpdateOrderAsync(orderId, request);
-                return Ok(orderDto);
+                return Ok(new ApiResponse<OrderDto>(orderDto, "Order updated successfully", true));
             }
-            catch (KeyNotFoundException)
+            catch (KeyNotFoundException ex)
             {
-                return NotFound();
+                return NotFound(new ApiResponse<string>(null, ex?.Message, false));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating order");
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the order");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>(null, "An error occurred while updating the order", false));
             }
         }
     }
