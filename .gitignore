@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.gitignore.txt
+/.vs
+/PetShop.Tests/bin
+/PetShop.Tests/obj
+/PetShop.Api/bin/Debug/net8.0
+/PetShop.Api/obj
