@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PetShop.Application\PetShop.Application.csproj" />
+    <ProjectReference Include="..\PetShop.Infrastructure\PetShop.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
