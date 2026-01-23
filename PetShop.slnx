@@ -1,3 +1,34 @@
 <Solution>
+  <Folder Name="/docs/">
+    <File Path="docs/API_CONTRACTS.md" />
+    <File Path="docs/API_DESIGN.md" />
+    <File Path="docs/ARCHITECTURE.md" />
+    <File Path="docs/DATA_AND_STATE.md" />
+    <File Path="docs/DEVELOPMENT_WORKFLOW.md" />
+    <File Path="docs/EXECUTION_FRAMEWORK.md" />
+    <File Path="docs/IMPLEMENTATION_PLAN.md" />
+    <File Path="docs/NON_FUNCTIONAL_REQUIREMENTS.md" />
+    <File Path="docs/ORDER_LIFECYCLE.md" />
+    <File Path="docs/README.md" />
+    <File Path="docs/VERSIONING.md" />
+  </Folder>
+  <Folder Name="/execution/">
+    <File Path="execution/PHASE_TEMPLATE.md" />
+    <File Path="execution/README.md" />
+    <File Path="execution/TASK_TEMPLATE.md" />
+  </Folder>
+  <Folder Name="/execution/phases/">
+    <File Path="execution/phases/P1-Setup.md" />
+    <File Path="execution/phases/P2-Domain.md" />
+    <File Path="execution/phases/P3-Application.md" />
+    <File Path="execution/phases/P4-Infrastructure.md" />
+    <File Path="execution/phases/P5-API.md" />
+    <File Path="execution/phases/P6-Testing.md" />
+    <File Path="execution/phases/P7-Polish.md" />
+  </Folder>
   <Project Path="PetShop.Api/PetShop.Api.csproj" />
+  <Project Path="PetShop.Application/PetShop.Application.csproj" Id="614db4bb-409c-43a7-946a-a2a07524d3e1" />
+  <Project Path="PetShop.Domain/PetShop.Domain.csproj" Id="05a45d9d-18b1-4369-8c83-9c13d7b897b4" />
+  <Project Path="PetShop.Infrastructure/PetShop.Infrastructure.csproj" Id="ab88c731-0357-4754-9126-deaa260a9805" />
+  <Project Path="PetShop.Tests/PetShop.Tests.csproj" Id="36122273-8ca6-4c8f-8556-f7ed7baf976a" />
 </Solution>

@@ -422,3 +422,4 @@ FodyWeavers.xsd
 # Execution and docs 
 execution/
 docs/
+.cursor/
