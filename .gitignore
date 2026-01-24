@@ -427,3 +427,4 @@ coverage-report/
 coverage-results/
 scripts/
 nginx/
+!dx/docs/
