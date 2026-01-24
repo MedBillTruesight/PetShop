@@ -32,7 +32,7 @@ jobs:
       run: dotnet tool install --global dotnet-reportgenerator-globaltool
 
     - name: Generate coverage report
-      run: reportgenerator -reports:"./test-results/*/coverage.cobertura.xml" -targetdir:"./coverage-report" -reporttypes:Html;TextSummary;Badges
+      run: reportgenerator -reports:"./test-results/*/coverage.cobertura.xml" -targetdir:"./coverage-report" -reporttypes:"Html;TextSummary;Badges"
 
     - name: Display coverage summary
       run: cat ./coverage-report/Summary.txt
