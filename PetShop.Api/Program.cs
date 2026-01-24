@@ -91,6 +91,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Register global exception handler middleware (must be early in pipeline)
+app.UseMiddleware<Middleware.GlobalExceptionHandlerMiddleware>();
+
 app.UseAuthorization();
 
         app.MapControllers();
