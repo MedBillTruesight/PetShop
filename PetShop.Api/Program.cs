@@ -1,6 +1,9 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
+using PetShop.Api.Swagger;
+using PetShop.Application.DTOs;
 using PetShop.Application.Repositories;
 using PetShop.Application.Services;
 using PetShop.Infrastructure;
@@ -42,19 +45,33 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    // Configure Swagger to support API versioning
     options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
-    
-    // Configure Swagger documents for each API version using a factory
     options.SwaggerGeneratorOptions.SwaggerDocs.Clear();
-    
-    // Add Swagger document for v1
+
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
         Title = "Pet Shop API",
         Version = "1.0",
-        Description = "REST API for Pet Shop management"
+        Description = "REST API for Pet Shop management. Manages customers, orders, and pets. " +
+            "Orders follow a lifecycle: Open → Processing → Delivered. Cost calculations (estimated vs actual) depend on order status.",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "Pet Shop API Support",
+            Email = "api-support@petshop.example.com",
+            Url = new Uri("https://github.com/petshop/api", UriKind.Absolute)
+        }
     });
+
+    // Include XML comments from API and Application assemblies
+    var apiXml = Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml");
+    if (File.Exists(apiXml))
+        options.IncludeXmlComments(apiXml);
+    var appXml = Path.Combine(AppContext.BaseDirectory, $"{typeof(CreateCustomerRequest).Assembly.GetName().Name}.xml");
+    if (File.Exists(appXml))
+        options.IncludeXmlComments(appXml);
+
+    options.OperationFilter<SwaggerExampleOperationFilter>();
+    options.DocumentFilter<SwaggerTagOrderDocumentFilter>();
 });
 
 // Configure DbContext with InMemory provider
