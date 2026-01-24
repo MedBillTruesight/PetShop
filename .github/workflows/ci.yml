@@ -125,7 +125,7 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-          -Dsonar.projectKey=felixmarvindev_PetShop # Replace with your actual SonarCloud project key
-          -Dsonar.organization=felixmarvindev        # Replace with your actual SonarCloud organization key
+          -Dsonar.projectKey=felixmarvindev_PetShop
+          -Dsonar.organization=felixmarvindev
           -Dsonar.cs.opencover.reportsPaths=test-results/*/coverage.opencover.xml
           -Dsonar.coverage.exclusions=**/Test*.cs,**/Program.cs,**/*TestController.cs,**/*ErrorTestController.cs
