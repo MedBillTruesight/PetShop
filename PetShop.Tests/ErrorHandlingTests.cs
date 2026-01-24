@@ -150,6 +150,74 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task HandleException_DbUpdateConcurrencyException_Returns409WithConcurrencyError()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/v1/error-test/concurrency");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var content = await response.Content.ReadAsStringAsync();
+        var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
+
+        errorResponse.Should().NotBeNull();
+        errorResponse!.Error.Should().NotBeNull();
+        errorResponse.Error.Code.Should().Be("CONCURRENCY_ERROR");
+        errorResponse.Error.Message.Should().Be("The resource was modified by another operation. Please refresh and try again.");
+    }
+
+    [Fact]
+    public async Task HandleException_KeyNotFoundException_Order_Returns404WithOrderNotFoundCode()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/v1/error-test/order-not-found");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var content = await response.Content.ReadAsStringAsync();
+        var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
+
+        errorResponse.Should().NotBeNull();
+        errorResponse!.Error.Should().NotBeNull();
+        errorResponse.Error.Code.Should().Be("ORDER_NOT_FOUND");
+        errorResponse.Error.Message.Should().Contain("Order with ID 123 was not found");
+    }
+
+    [Fact]
+    public async Task HandleException_KeyNotFoundException_Pet_Returns404WithPetNotFoundCode()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/v1/error-test/pet-not-found");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var content = await response.Content.ReadAsStringAsync();
+        var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
+
+        errorResponse.Should().NotBeNull();
+        errorResponse!.Error.Should().NotBeNull();
+        errorResponse.Error.Code.Should().Be("PET_NOT_FOUND");
+        errorResponse.Error.Message.Should().Contain("Pet with ID 456 was not found");
+    }
+
+    [Fact]
+    public async Task HandleException_KeyNotFoundException_Generic_Returns404WithResourceNotFoundCode()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/v1/error-test/resource-not-found");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var content = await response.Content.ReadAsStringAsync();
+        var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
+
+        errorResponse.Should().NotBeNull();
+        errorResponse!.Error.Should().NotBeNull();
+        errorResponse.Error.Code.Should().Be("RESOURCE_NOT_FOUND");
+        errorResponse.Error.Message.Should().Contain("Resource XYZ was not found");
+    }
+
+    [Fact]
     public async Task HandleException_ErrorResponseFormat_MatchesApiContract()
     {
         // Act

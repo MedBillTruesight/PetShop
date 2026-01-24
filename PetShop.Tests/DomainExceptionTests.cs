@@ -1,6 +1,8 @@
 using FluentAssertions;
 using PetShop.Domain;
 
+namespace PetShop.Tests;
+
 /// <summary>
 /// Unit tests for domain exception classes to achieve 100% coverage.
 /// Tests all constructors and exception behavior.

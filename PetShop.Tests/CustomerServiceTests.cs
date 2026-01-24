@@ -455,4 +455,315 @@ public class CustomerServiceTests
     }
 
     #endregion
+
+    #region GetAllCustomersAsync Tests
+
+    [Fact]
+    public async Task GetAllCustomersAsync_WithMultipleCustomers_ShouldReturnAllCustomersWithPaymentCalculations()
+    {
+        // Arrange
+        var customer1 = new Customer("John", "Doe", "john@example.com", "555-1234");
+        var customer2 = new Customer("Jane", "Smith", "jane@example.com", "555-5678");
+
+        var customers = new[] { customer1, customer2 };
+
+        // Create orders for customer1
+        var order1 = new Order(customer1.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var pet1 = new Pet(order1.Id, "Fluffy", 100m);
+        order1.AddPet(pet1);
+
+        var order2 = new Order(customer1.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(2)));
+        var pet2 = new Pet(order2.Id, "Spot", 150m);
+        order2.AddPet(pet2);
+        order2.TransitionToProcessing();
+
+        var orders = new[] { order1, order2 };
+
+        _customerRepositoryMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(customers);
+
+        _orderRepositoryMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(orders);
+
+        // Act
+        var result = await _customerService.GetAllCustomersAsync();
+
+        // Assert
+        result.Should().HaveCount(2);
+
+        var resultList = result.ToList();
+        var johnDto = resultList.First(c => c.Id == customer1.Id);
+        var janeDto = resultList.First(c => c.Id == customer2.Id);
+
+        johnDto.FirstName.Should().Be("John");
+        johnDto.LastName.Should().Be("Doe");
+        johnDto.EstimatedPaymentDue.Should().Be(250m); // 100 + 150
+        johnDto.ActualPaymentDue.Should().Be(0m);
+
+        janeDto.FirstName.Should().Be("Jane");
+        janeDto.LastName.Should().Be("Smith");
+        janeDto.EstimatedPaymentDue.Should().Be(0m);
+        janeDto.ActualPaymentDue.Should().Be(0m);
+    }
+
+    [Fact]
+    public async Task GetAllCustomersAsync_WithNoCustomers_ShouldReturnEmptyCollection()
+    {
+        // Arrange
+        _customerRepositoryMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(Array.Empty<Customer>());
+
+        _orderRepositoryMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(Array.Empty<Order>());
+
+        // Act
+        var result = await _customerService.GetAllCustomersAsync();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllCustomersAsync_WithDeliveredOrders_ShouldCalculateActualPaymentDue()
+    {
+        // Arrange
+        var customer = new Customer("John", "Doe");
+
+        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var pet = new Pet(order.Id, "Fluffy", 100m);
+        order.AddPet(pet);
+        order.TransitionToProcessing();
+        order.TransitionToDelivered();
+
+        var customers = new[] { customer };
+        var orders = new[] { order };
+
+        _customerRepositoryMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(customers);
+
+        _orderRepositoryMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(orders);
+
+        // Act
+        var result = await _customerService.GetAllCustomersAsync();
+
+        // Assert
+        result.Should().HaveCount(1);
+        var customerDto = result.First();
+        customerDto.EstimatedPaymentDue.Should().Be(0m);
+        customerDto.ActualPaymentDue.Should().Be(100m);
+    }
+
+    #endregion
+
+    #region GetCustomerOrdersAsync Tests
+
+    [Fact]
+    public async Task GetCustomerOrdersAsync_WithExistingCustomerAndOrders_ShouldReturnOrderDtos()
+    {
+        // Arrange
+        var customer = new Customer("John", "Doe");
+        var customerId = customer.Id;
+
+        var order1 = new Order(customerId, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var pet1 = new Pet(order1.Id, "Fluffy", 100m);
+        order1.AddPet(pet1);
+
+        var order2 = new Order(customerId, DateOnly.FromDateTime(DateTime.Today.AddDays(2)));
+        var pet2 = new Pet(order2.Id, "Spot", 150m);
+        order2.AddPet(pet2);
+        order2.TransitionToProcessing();
+
+        var orders = new[] { order1, order2 };
+
+        _customerRepositoryMock
+            .Setup(r => r.GetByIdAsync(customerId))
+            .ReturnsAsync(customer);
+
+        _orderRepositoryMock
+            .Setup(r => r.GetByCustomerIdAsync(customerId))
+            .ReturnsAsync(orders);
+
+        // Act
+        var result = await _customerService.GetCustomerOrdersAsync(customerId);
+
+        // Assert
+        result.Should().HaveCount(2);
+
+        var resultList = result.ToList();
+        var order1Dto = resultList.First(o => o.Id == order1.Id);
+        var order2Dto = resultList.First(o => o.Id == order2.Id);
+
+        order1Dto.Status.Should().Be(OrderStatus.Open);
+        order1Dto.EstimatedCost.Should().Be(100m);
+        order1Dto.ActualCost.Should().BeNull();
+        order1Dto.Pets.Should().HaveCount(1);
+        order1Dto.Pets.First().Name.Should().Be("Fluffy");
+
+        order2Dto.Status.Should().Be(OrderStatus.Processing);
+        order2Dto.EstimatedCost.Should().Be(150m);
+        order2Dto.ActualCost.Should().BeNull();
+        order2Dto.Pets.Should().HaveCount(1);
+        order2Dto.Pets.First().Name.Should().Be("Spot");
+    }
+
+    [Fact]
+    public async Task GetCustomerOrdersAsync_WithExistingCustomerNoOrders_ShouldReturnEmptyCollection()
+    {
+        // Arrange
+        var customer = new Customer("John", "Doe");
+        var customerId = customer.Id;
+
+        _customerRepositoryMock
+            .Setup(r => r.GetByIdAsync(customerId))
+            .ReturnsAsync(customer);
+
+        _orderRepositoryMock
+            .Setup(r => r.GetByCustomerIdAsync(customerId))
+            .ReturnsAsync(Array.Empty<Order>());
+
+        // Act
+        var result = await _customerService.GetCustomerOrdersAsync(customerId);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCustomerOrdersAsync_WithNonExistentCustomer_ShouldThrowKeyNotFoundException()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+
+        _customerRepositoryMock
+            .Setup(r => r.GetByIdAsync(customerId))
+            .ReturnsAsync((Customer?)null);
+
+        // Act
+        var act = async () => await _customerService.GetCustomerOrdersAsync(customerId);
+
+        // Assert
+        await act.Should().ThrowAsync<KeyNotFoundException>()
+            .WithMessage($"Customer with ID {customerId} was not found.");
+    }
+
+    [Fact]
+    public async Task GetCustomerOrdersAsync_WithDeliveredOrder_ShouldIncludeActualCost()
+    {
+        // Arrange
+        var customer = new Customer("John", "Doe");
+        var customerId = customer.Id;
+
+        var order = new Order(customerId, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var pet = new Pet(order.Id, "Fluffy", 100m);
+        order.AddPet(pet);
+        order.TransitionToProcessing();
+        order.TransitionToDelivered();
+
+        var orders = new[] { order };
+
+        _customerRepositoryMock
+            .Setup(r => r.GetByIdAsync(customerId))
+            .ReturnsAsync(customer);
+
+        _orderRepositoryMock
+            .Setup(r => r.GetByCustomerIdAsync(customerId))
+            .ReturnsAsync(orders);
+
+        // Act
+        var result = await _customerService.GetCustomerOrdersAsync(customerId);
+
+        // Assert
+        result.Should().HaveCount(1);
+        var orderDto = result.First();
+        orderDto.Status.Should().Be(OrderStatus.Delivered);
+        orderDto.ActualCost.Should().Be(100m);
+        orderDto.EstimatedCost.Should().BeNull();
+    }
+
+    #endregion
+
+    #region DeleteCustomerAsync Tests
+
+    [Fact]
+    public async Task DeleteCustomerAsync_WithExistingCustomerNoOrders_ShouldDeleteSuccessfully()
+    {
+        // Arrange
+        var customer = new Customer("John", "Doe");
+        var customerId = customer.Id;
+
+        _customerRepositoryMock
+            .Setup(r => r.GetByIdAsync(customerId))
+            .ReturnsAsync(customer);
+
+        _customerRepositoryMock
+            .Setup(r => r.DeleteAsync(customerId))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _customerService.DeleteCustomerAsync(customerId);
+
+        // Assert
+        _customerRepositoryMock.Verify(r => r.DeleteAsync(customerId), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteCustomerAsync_WithNonExistentCustomer_ShouldThrowKeyNotFoundException()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+
+        _customerRepositoryMock
+            .Setup(r => r.GetByIdAsync(customerId))
+            .ReturnsAsync((Customer?)null);
+
+        // Act
+        var act = async () => await _customerService.DeleteCustomerAsync(customerId);
+
+        // Assert
+        await act.Should().ThrowAsync<KeyNotFoundException>()
+            .WithMessage($"Customer with ID {customerId} was not found.");
+
+        _customerRepositoryMock.Verify(r => r.DeleteAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteCustomerAsync_WithCustomerHavingOrders_ShouldThrowBusinessRuleViolationException()
+    {
+        // Arrange
+        var customer = new Customer("John", "Doe");
+        var customerId = customer.Id;
+
+        // Create an order for this customer
+        var order = new Order(customerId, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var pet = new Pet(order.Id, "Fluffy", 100m);
+        order.AddPet(pet);
+
+        var orders = new[] { order };
+
+        _customerRepositoryMock
+            .Setup(r => r.GetByIdAsync(customerId))
+            .ReturnsAsync(customer);
+
+        _orderRepositoryMock
+            .Setup(r => r.GetByCustomerIdAsync(customerId))
+            .ReturnsAsync(orders);
+
+        // Act
+        var act = async () => await _customerService.DeleteCustomerAsync(customerId);
+
+        // Assert
+        await act.Should().ThrowAsync<BusinessRuleViolationException>()
+            .WithMessage("Cannot delete customer 'John Doe' because they have 1 order(s).");
+
+        _customerRepositoryMock.Verify(r => r.DeleteAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    #endregion
 }

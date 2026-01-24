@@ -29,7 +29,9 @@ public sealed class SwaggerExampleOperationFilter : IOperationFilter
             return;
 
         var content = operation.RequestBody.Content["application/json"];
-        IOpenApiAny? example = (path, method) switch
+        // Normalize path to handle both v1 and v{version} patterns
+        var normalizedPath = path.Replace("api/v1/", "api/v{version}/");
+        IOpenApiAny? example = (normalizedPath, method) switch
         {
             ("api/v{version}/customers", "POST") => CreateCreateCustomerRequestExample(),
             ("api/v{version}/customers/{id}", "PUT") => CreateUpdateCustomerRequestExample(),
@@ -46,7 +48,9 @@ public sealed class SwaggerExampleOperationFilter : IOperationFilter
 
     private static void AddSuccessResponseExamples(OpenApiOperation operation, string path, string method)
     {
-        switch ((path, method))
+        // Normalize path to handle both v1 and v{version} patterns
+        var normalizedPath = path.Replace("api/v1/", "api/v{version}/");
+        switch ((normalizedPath, method))
         {
             case ("api/v{version}/customers", "POST"):
                 AddExampleToResponse(operation, "201", CreateCustomerResponseExample());
@@ -73,7 +77,7 @@ public sealed class SwaggerExampleOperationFilter : IOperationFilter
                 AddExampleToResponse(operation, "200", CreateCustomerOrdersResponseExample());
                 break;
             default:
-                if (path.StartsWith("api/v{version}/orders/", StringComparison.Ordinal) && path.EndsWith("/pets", StringComparison.Ordinal) && method == "POST")
+                if (normalizedPath.StartsWith("api/v{version}/orders/", StringComparison.Ordinal) && normalizedPath.EndsWith("/pets", StringComparison.Ordinal) && method == "POST")
                     AddExampleToResponse(operation, "201", CreateOrderWithPetResponseExample());
                 break;
         }
@@ -88,6 +92,7 @@ public sealed class SwaggerExampleOperationFilter : IOperationFilter
             ("404", "ORDER_NOT_FOUND", "Order with ID {id} was not found."),
             ("409", "ORDER_INVALID_STATE", "Cannot add pets to order in Processing status. Pets can only be added when order is Open."),
             ("422", "INVALID_PICKUP_DATE", "Pickup date must be today or in the future."),
+            ("500", "INTERNAL_SERVER_ERROR", "An unexpected error occurred while processing the request."),
         })
         {
             if (!operation.Responses.TryGetValue(status, out var response))

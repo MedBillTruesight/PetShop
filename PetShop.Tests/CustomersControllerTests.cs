@@ -5,6 +5,7 @@ using PetShop.Api.DTOs;
 using PetShop.Application.DTOs;
 using PetShop.Domain;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -88,8 +89,8 @@ public class CustomersControllerTests : IClassFixture<WebApplicationFactory<Prog
     [Fact]
     public async Task CreateCustomer_NullRequest_Returns400BadRequest()
     {
-        // Act
-        var response = await _client.PostAsJsonAsync<CreateCustomerRequest>("/api/v1/customers", null!);
+        // Act - Send empty request body
+        var response = await _client.PostAsync("/api/v1/customers", new StringContent("", System.Text.Encoding.UTF8, "application/json"));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -201,8 +202,8 @@ public class CustomersControllerTests : IClassFixture<WebApplicationFactory<Prog
         var createResponse = await _client.PostAsJsonAsync("/api/v1/customers", createRequest);
         var createdCustomer = await createResponse.Content.ReadFromJsonAsync<CustomerDto>(_jsonOptions);
 
-        // Act
-        var response = await _client.PutAsJsonAsync<UpdateCustomerRequest>($"/api/v1/customers/{createdCustomer!.Id}", null!);
+        // Act - Send empty request body
+        var response = await _client.PutAsync($"/api/v1/customers/{createdCustomer!.Id}", new StringContent("", System.Text.Encoding.UTF8, "application/json"));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

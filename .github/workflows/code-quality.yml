@@ -1,0 +1,57 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '**.cs'
+      - '**.csproj'
+      - '**.slnx'
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore PetShop.slnx
+
+    - name: Check code formatting
+      run: dotnet format PetShop.slnx --verify-no-changes --verbosity diagnostic
+
+    - name: Build solution
+      run: dotnet build PetShop.slnx --configuration Release --no-restore
+
+    - name: Run tests (quick validation)
+      run: dotnet test PetShop.slnx --configuration Release --no-build --verbosity minimal
+
+    - name: Check for compiler warnings
+      run: |
+        WARNINGS=$(dotnet build PetShop.slnx --configuration Release --no-restore 2>&1 | grep -c "warning")
+        if [ "$WARNINGS" -gt 0 ]; then
+          echo "❌ Found $WARNINGS compiler warnings"
+          dotnet build PetShop.slnx --configuration Release --no-restore
+          exit 1
+        else
+          echo "✅ No compiler warnings found"
+        fi
+
+    - name: Check for TODO comments
+      run: |
+        TODO_COUNT=$(grep -r "TODO\|FIXME\|HACK" --include="*.cs" . | wc -l)
+        if [ "$TODO_COUNT" -gt 0 ]; then
+          echo "⚠️ Found $TODO_COUNT TODO/FIXME/HACK comments:"
+          grep -r "TODO\|FIXME\|HACK" --include="*.cs" .
+          echo ""
+          echo "Consider addressing these before merging"
+        else
+          echo "✅ No TODO comments found"
+        fi

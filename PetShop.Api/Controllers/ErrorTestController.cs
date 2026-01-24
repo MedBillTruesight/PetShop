@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PetShop.Domain;
 
 namespace PetShop.Api.Controllers;
@@ -64,6 +65,42 @@ public class ErrorTestController : ControllerBase
     public IActionResult ThrowArgument()
     {
         throw new ArgumentException("Invalid argument value", "customerId");
+    }
+
+    /// <summary>
+    /// Test endpoint that throws DbUpdateConcurrencyException.
+    /// </summary>
+    [HttpGet("concurrency")]
+    public IActionResult ThrowConcurrency()
+    {
+        throw new DbUpdateConcurrencyException("Concurrency conflict detected", innerException: null);
+    }
+
+    /// <summary>
+    /// Test endpoint that throws KeyNotFoundException for order.
+    /// </summary>
+    [HttpGet("order-not-found")]
+    public IActionResult ThrowOrderNotFound()
+    {
+        throw new KeyNotFoundException("Order with ID 123 was not found");
+    }
+
+    /// <summary>
+    /// Test endpoint that throws KeyNotFoundException for pet.
+    /// </summary>
+    [HttpGet("pet-not-found")]
+    public IActionResult ThrowPetNotFound()
+    {
+        throw new KeyNotFoundException("Pet with ID 456 was not found");
+    }
+
+    /// <summary>
+    /// Test endpoint that throws KeyNotFoundException with generic message.
+    /// </summary>
+    [HttpGet("resource-not-found")]
+    public IActionResult ThrowResourceNotFound()
+    {
+        throw new KeyNotFoundException("Resource XYZ was not found");
     }
 
     /// <summary>

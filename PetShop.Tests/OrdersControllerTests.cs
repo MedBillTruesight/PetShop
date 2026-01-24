@@ -5,6 +5,7 @@ using PetShop.Api.DTOs;
 using PetShop.Application.DTOs;
 using PetShop.Domain;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -99,8 +100,8 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
     [Fact]
     public async Task CreateOrder_NullRequest_Returns400BadRequest()
     {
-        // Act
-        var response = await _client.PostAsJsonAsync<CreateOrderRequest>("/api/v1/orders", null!);
+        // Act - Send empty request body
+        var response = await _client.PostAsync("/api/v1/orders", new StringContent("", System.Text.Encoding.UTF8, "application/json"));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -242,6 +243,19 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task UpdateOrder_NullRequest_Returns400BadRequest()
+    {
+        // Arrange - Create an order first
+        var order = await CreateTestOrderAsync();
+
+        // Act - Send empty request body
+        var response = await _client.PatchAsync($"/api/v1/orders/{order.Id}", new StringContent("", System.Text.Encoding.UTF8, "application/json"));
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     #endregion
 
     #region State Transition Tests
@@ -349,6 +363,37 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task TransitionOrder_NullRequest_Returns400BadRequest()
+    {
+        // Arrange - Create an order first
+        var order = await CreateTestOrderAsync();
+
+        // Act - Send empty request body
+        var response = await _client.PostAsync($"/api/v1/orders/{order.Id}/transition", new StringContent("", System.Text.Encoding.UTF8, "application/json"));
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task TransitionOrder_InvalidStatus_Returns400BadRequest()
+    {
+        // Arrange - Create an order first
+        var order = await CreateTestOrderAsync();
+
+        var transitionRequest = new TransitionOrderRequest
+        {
+            Status = OrderStatus.Open // Invalid - can't transition back to Open
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync($"/api/v1/orders/{order.Id}/transition", transitionRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     #endregion
 
     #region Add Pet Tests
@@ -416,6 +461,19 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task AddPetToOrder_NullRequest_Returns400BadRequest()
+    {
+        // Arrange - Create an order first
+        var order = await CreateTestOrderAsync();
+
+        // Act - Send empty request body
+        var response = await _client.PostAsync($"/api/v1/orders/{order.Id}/pets", new StringContent("", System.Text.Encoding.UTF8, "application/json"));
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     #endregion

@@ -164,9 +164,10 @@ public class CustomerService
         }
 
         // Business rule: cannot delete customer if they have any orders
-        if (customer.Orders.Any())
+        var orders = await _orderRepository.GetByCustomerIdAsync(id);
+        if (orders.Any())
         {
-            throw new BusinessRuleViolationException($"Cannot delete customer '{customer.FirstName} {customer.LastName}' because they have {customer.Orders.Count} order(s).");
+            throw new BusinessRuleViolationException($"Cannot delete customer '{customer.FirstName} {customer.LastName}' because they have {orders.Count()} order(s).");
         }
 
         await _customerRepository.DeleteAsync(id);

@@ -238,6 +238,94 @@ public class OrderServiceTests
 
     #endregion
 
+    #region GetAllOrdersAsync Tests
+
+    [Fact]
+    public async Task GetAllOrdersAsync_WithMultipleOrders_ShouldReturnAllOrderDtos()
+    {
+        // Arrange
+        var customer1 = new Customer("John", "Doe");
+        var customer2 = new Customer("Jane", "Smith");
+
+        var order1 = new Order(customer1.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var pet1 = new Pet(order1.Id, "Fluffy", 100m);
+        order1.AddPet(pet1);
+
+        var order2 = new Order(customer2.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(2)));
+        var pet2 = new Pet(order2.Id, "Spot", 150m);
+        order2.AddPet(pet2);
+        order2.TransitionToProcessing();
+
+        var orders = new[] { order1, order2 };
+
+        _orderRepositoryMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(orders);
+
+        // Act
+        var result = await _orderService.GetAllOrdersAsync();
+
+        // Assert
+        result.Should().HaveCount(2);
+
+        var resultList = result.ToList();
+        var order1Dto = resultList.First(o => o.Id == order1.Id);
+        var order2Dto = resultList.First(o => o.Id == order2.Id);
+
+        order1Dto.Status.Should().Be(OrderStatus.Open);
+        order1Dto.EstimatedCost.Should().Be(100m);
+        order1Dto.ActualCost.Should().BeNull();
+
+        order2Dto.Status.Should().Be(OrderStatus.Processing);
+        order2Dto.EstimatedCost.Should().Be(150m);
+        order2Dto.ActualCost.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetAllOrdersAsync_WithNoOrders_ShouldReturnEmptyCollection()
+    {
+        // Arrange
+        _orderRepositoryMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(Array.Empty<Order>());
+
+        // Act
+        var result = await _orderService.GetAllOrdersAsync();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllOrdersAsync_WithDeliveredOrder_ShouldIncludeActualCost()
+    {
+        // Arrange
+        var customer = new Customer("John", "Doe");
+        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var pet = new Pet(order.Id, "Fluffy", 100m);
+        order.AddPet(pet);
+        order.TransitionToProcessing();
+        order.TransitionToDelivered();
+
+        var orders = new[] { order };
+
+        _orderRepositoryMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(orders);
+
+        // Act
+        var result = await _orderService.GetAllOrdersAsync();
+
+        // Assert
+        result.Should().HaveCount(1);
+        var orderDto = result.First();
+        orderDto.Status.Should().Be(OrderStatus.Delivered);
+        orderDto.ActualCost.Should().Be(100m);
+        orderDto.EstimatedCost.Should().BeNull();
+    }
+
+    #endregion
+
     #region UpdateOrderAsync Tests
 
     [Fact]
