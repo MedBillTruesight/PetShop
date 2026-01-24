@@ -59,7 +59,7 @@ public class TestServerFixture : WebApplicationFactory<Program>, IDisposable
     /// <summary>
     /// Gets the service provider for direct service access in tests.
     /// </summary>
-    public IServiceProvider Services => Server.Services;
+    public new IServiceProvider Services => Server.Services;
 
     /// <summary>
     /// Executes an action within a service scope.

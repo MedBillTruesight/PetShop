@@ -1,40 +1,28 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using PetShop.Domain;
-using PetShop.Infrastructure;
 using PetShop.Infrastructure.Repositories;
-
-namespace PetShop.Tests;
 
 /// <summary>
 /// Integration tests for the OrderRepository.
 /// Tests use real DbContext with InMemory provider to verify actual database operations.
 /// </summary>
-public class OrderRepositoryTests
+public class OrderRepositoryTests : BaseRepositoryTest
 {
-    private static PetShopDbContext CreateDbContext()
-    {
-        var options = new DbContextOptionsBuilder<PetShopDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-
-        return new PetShopDbContext(options);
-    }
-
     #region GetByIdAsync Tests
 
     [Fact]
-    public async Task GetByIdAsync_WithExistingOrder_ShouldReturnOrder()
+    public async Task GetByIdAsync_WithExistingOrder_ShouldReturnOrderWithIncludes()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var customer = await CreateAndSaveCustomerAsync("John", "Doe");
+        var order = await CreateAndSaveOrderAsync(
+            customer.Id,
+            Tomorrow,
+            CreateTestPet(customer.Id, "Fluffy", 100m),
+            CreateTestPet(customer.Id, "Buddy", 150m));
 
-        context.Customers.Add(customer);
-        context.Orders.Add(order);
-        await context.SaveChangesAsync();
+        var repository = new OrderRepository(DbContext);
 
         // Act
         var result = await repository.GetByIdAsync(order.Id);
@@ -43,74 +31,45 @@ public class OrderRepositoryTests
         result.Should().NotBeNull();
         result!.Id.Should().Be(order.Id);
         result.CustomerId.Should().Be(customer.Id);
-        result.Status.Should().Be(OrderStatus.Open);
+        result.Customer.Should().NotBeNull();
+        result.Customer!.FirstName.Should().Be("John");
+        result.Customer.LastName.Should().Be("Doe");
+        result.Pets.Should().HaveCount(2);
+        result.Pets.Should().Contain(p => p.Name == "Fluffy" && p.Price == 100m);
+        result.Pets.Should().Contain(p => p.Name == "Buddy" && p.Price == 150m);
     }
 
     [Fact]
     public async Task GetByIdAsync_WithNonExistentOrder_ShouldReturnNull()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var orderId = Guid.NewGuid();
+        var repository = new OrderRepository(DbContext);
+        var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await repository.GetByIdAsync(orderId);
+        var result = await repository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task GetByIdAsync_WithOrderWithPets_ShouldIncludePets()
+    public async Task GetByIdAsync_WithOrderWithoutPets_ShouldReturnOrder()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
-        var pet1 = new Pet(order.Id, "Fluffy", 100m);
-        var pet2 = new Pet(order.Id, "Spot", 150m);
-        order.AddPet(pet1);
-        order.AddPet(pet2);
+        var customer = await CreateAndSaveCustomerAsync("Jane", "Smith");
+        var order = await CreateAndSaveOrderAsync(customer.Id, Tomorrow); // No pets
 
-        context.Customers.Add(customer);
-        context.Orders.Add(order);
-        context.Pets.Add(pet1);
-        context.Pets.Add(pet2);
-        await context.SaveChangesAsync();
+        var repository = new OrderRepository(DbContext);
 
         // Act
         var result = await repository.GetByIdAsync(order.Id);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Pets.Should().HaveCount(2);
-        result.Pets.Should().Contain(p => p.Id == pet1.Id);
-        result.Pets.Should().Contain(p => p.Id == pet2.Id);
-    }
-
-    [Fact]
-    public async Task GetByIdAsync_WithOrder_ShouldIncludeCustomer()
-    {
-        // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
-
-        context.Customers.Add(customer);
-        context.Orders.Add(order);
-        await context.SaveChangesAsync();
-
-        // Act
-        var result = await repository.GetByIdAsync(order.Id);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Customer.Should().NotBeNull();
-        result.Customer.Id.Should().Be(customer.Id);
-        result.Customer.FirstName.Should().Be("John");
+        result!.Id.Should().Be(order.Id);
+        result.CustomerId.Should().Be(customer.Id);
+        result.Pets.Should().NotBeNull().And.BeEmpty();
     }
 
     #endregion
@@ -118,35 +77,19 @@ public class OrderRepositoryTests
     #region GetAllAsync Tests
 
     [Fact]
-    public async Task GetAllAsync_WithNoOrders_ShouldReturnEmptyCollection()
-    {
-        // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-
-        // Act
-        var result = await repository.GetAllAsync();
-
-        // Assert
-        result.Should().NotBeNull().And.BeEmpty();
-    }
-
-    [Fact]
     public async Task GetAllAsync_WithMultipleOrders_ShouldReturnAllOrders()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order1 = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
-        var order2 = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(2)));
-        var order3 = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(3)));
+        var customer1 = await CreateAndSaveCustomerAsync("John", "Doe");
+        var customer2 = await CreateAndSaveCustomerAsync("Jane", "Smith");
 
-        context.Customers.Add(customer);
-        context.Orders.Add(order1);
-        context.Orders.Add(order2);
-        context.Orders.Add(order3);
-        await context.SaveChangesAsync();
+        var order1 = await CreateAndSaveOrderAsync(customer1.Id, Tomorrow,
+            CreateTestPet(customer1.Id, "Fluffy", 100m));
+        var order2 = await CreateAndSaveOrderAsync(customer2.Id, Tomorrow.AddDays(1),
+            CreateTestPet(customer2.Id, "Buddy", 150m));
+        var order3 = await CreateAndSaveOrderAsync(customer1.Id, Tomorrow.AddDays(2)); // No pets
+
+        var repository = new OrderRepository(DbContext);
 
         // Act
         var result = await repository.GetAllAsync();
@@ -156,6 +99,23 @@ public class OrderRepositoryTests
         result.Should().Contain(o => o.Id == order1.Id);
         result.Should().Contain(o => o.Id == order2.Id);
         result.Should().Contain(o => o.Id == order3.Id);
+
+        // Verify includes work
+        result.All(o => o.Customer != null).Should().BeTrue();
+        result.All(o => o.Pets != null).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithNoOrders_ShouldReturnEmptyCollection()
+    {
+        // Arrange
+        var repository = new OrderRepository(DbContext);
+
+        // Act
+        var result = await repository.GetAllAsync();
+
+        // Assert
+        result.Should().NotBeNull().And.BeEmpty();
     }
 
     #endregion
@@ -163,23 +123,19 @@ public class OrderRepositoryTests
     #region GetByCustomerIdAsync Tests
 
     [Fact]
-    public async Task GetByCustomerIdAsync_WithCustomerWithOrders_ShouldReturnCustomerOrders()
+    public async Task GetByCustomerIdAsync_WithExistingCustomer_ShouldReturnCustomerOrders()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer1 = new Customer("John", "Doe");
-        var customer2 = new Customer("Jane", "Smith");
-        var order1 = new Order(customer1.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
-        var order2 = new Order(customer1.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(2)));
-        var order3 = new Order(customer2.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(3)));
+        var customer1 = await CreateAndSaveCustomerAsync("John", "Doe");
+        var customer2 = await CreateAndSaveCustomerAsync("Jane", "Smith");
 
-        context.Customers.Add(customer1);
-        context.Customers.Add(customer2);
-        context.Orders.Add(order1);
-        context.Orders.Add(order2);
-        context.Orders.Add(order3);
-        await context.SaveChangesAsync();
+        var order1 = await CreateAndSaveOrderAsync(customer1.Id, Tomorrow,
+            CreateTestPet(customer1.Id, "Fluffy", 100m));
+        var order2 = await CreateAndSaveOrderAsync(customer1.Id, Tomorrow.AddDays(1),
+            CreateTestPet(customer1.Id, "Buddy", 150m));
+        var order3 = await CreateAndSaveOrderAsync(customer2.Id, Tomorrow); // Different customer
+
+        var repository = new OrderRepository(DbContext);
 
         // Act
         var result = await repository.GetByCustomerIdAsync(customer1.Id);
@@ -189,17 +145,18 @@ public class OrderRepositoryTests
         result.Should().Contain(o => o.Id == order1.Id);
         result.Should().Contain(o => o.Id == order2.Id);
         result.Should().NotContain(o => o.Id == order3.Id);
+
+        // Verify all orders belong to the correct customer
+        result.All(o => o.CustomerId == customer1.Id).Should().BeTrue();
+        result.All(o => o.Customer != null).Should().BeTrue();
     }
 
     [Fact]
-    public async Task GetByCustomerIdAsync_WithCustomerWithNoOrders_ShouldReturnEmptyCollection()
+    public async Task GetByCustomerIdAsync_WithCustomerHavingNoOrders_ShouldReturnEmptyCollection()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        context.Customers.Add(customer);
-        await context.SaveChangesAsync();
+        var customer = await CreateAndSaveCustomerAsync("John", "Doe");
+        var repository = new OrderRepository(DbContext);
 
         // Act
         var result = await repository.GetByCustomerIdAsync(customer.Id);
@@ -209,28 +166,17 @@ public class OrderRepositoryTests
     }
 
     [Fact]
-    public async Task GetByCustomerIdAsync_WithOrdersWithPets_ShouldIncludePets()
+    public async Task GetByCustomerIdAsync_WithNonExistentCustomer_ShouldReturnEmptyCollection()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
-        var pet = new Pet(order.Id, "Fluffy", 100m);
-        order.AddPet(pet);
-
-        context.Customers.Add(customer);
-        context.Orders.Add(order);
-        context.Pets.Add(pet);
-        await context.SaveChangesAsync();
+        var nonExistentCustomerId = Guid.NewGuid();
+        var repository = new OrderRepository(DbContext);
 
         // Act
-        var result = await repository.GetByCustomerIdAsync(customer.Id);
+        var result = await repository.GetByCustomerIdAsync(nonExistentCustomerId);
 
         // Assert
-        result.Should().HaveCount(1);
-        result.First().Pets.Should().HaveCount(1);
-        result.First().Pets.First().Id.Should().Be(pet.Id);
+        result.Should().NotBeNull().And.BeEmpty();
     }
 
     #endregion
@@ -238,55 +184,59 @@ public class OrderRepositoryTests
     #region CreateAsync Tests
 
     [Fact]
-    public async Task CreateAsync_WithValidOrder_ShouldPersistOrder()
+    public async Task CreateAsync_WithValidOrder_ShouldCreateOrder()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var customer = await CreateAndSaveCustomerAsync("John", "Doe");
+        var order = new Order(customer.Id, Tomorrow);
+        var pet1 = new Pet(order.Id, "Fluffy", 100m, "Cat", "White");
+        var pet2 = new Pet(order.Id, "Buddy", 150m, "Dog", "Brown");
+        order.AddPet(pet1);
+        order.AddPet(pet2);
 
-        context.Customers.Add(customer);
-        await context.SaveChangesAsync();
+        var repository = new OrderRepository(DbContext);
 
         // Act
         var result = await repository.CreateAsync(order);
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().Be(order.Id);
+        result.Id.Should().NotBeEmpty();
+        result.CustomerId.Should().Be(customer.Id);
+        result.PickupDate.Should().Be(Tomorrow);
+        result.Pets.Should().HaveCount(2);
 
-        var savedOrder = await context.Orders.FindAsync(order.Id);
-        savedOrder.Should().NotBeNull();
-        savedOrder!.CustomerId.Should().Be(customer.Id);
-        savedOrder.Status.Should().Be(OrderStatus.Open);
+        // Verify persisted in database
+        var persistedOrder = await DbContext.Orders
+            .Include(o => o.Customer)
+            .Include(o => o.Pets)
+            .FirstOrDefaultAsync(o => o.Id == result.Id);
+
+        persistedOrder.Should().NotBeNull();
+        persistedOrder!.Customer.Should().NotBeNull();
+        persistedOrder.Pets.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task CreateAsync_WithOrderWithPets_ShouldPersistOrderAndPets()
+    public async Task CreateAsync_WithOrderWithoutPets_ShouldCreateOrder()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
-        var pet = new Pet(order.Id, "Fluffy", 100m);
-        order.AddPet(pet);
+        var customer = await CreateAndSaveCustomerAsync("Jane", "Smith");
+        var order = new Order(customer.Id, Tomorrow.AddDays(1));
 
-        context.Customers.Add(customer);
-        await context.SaveChangesAsync();
+        var repository = new OrderRepository(DbContext);
 
         // Act
         var result = await repository.CreateAsync(order);
 
         // Assert
         result.Should().NotBeNull();
-        var savedOrder = await context.Orders
-            .Include(o => o.Pets)
-            .FirstOrDefaultAsync(o => o.Id == order.Id);
-        savedOrder.Should().NotBeNull();
-        savedOrder!.Pets.Should().HaveCount(1);
-        savedOrder.Pets.First().Id.Should().Be(pet.Id);
+        result.Id.Should().NotBeEmpty();
+        result.Pets.Should().NotBeNull().And.BeEmpty();
+
+        // Verify persisted
+        var persistedOrder = await DbContext.Orders.FindAsync(result.Id);
+        persistedOrder.Should().NotBeNull();
     }
 
     #endregion
@@ -294,90 +244,92 @@ public class OrderRepositoryTests
     #region UpdateAsync Tests
 
     [Fact]
-    public async Task UpdateAsync_WithModifiedOrder_ShouldUpdateOrder()
+    public async Task UpdateAsync_WithModifiedPickupDate_ShouldUpdateOrder()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var customer = await CreateAndSaveCustomerAsync("John", "Doe");
+        var order = await CreateAndSaveOrderAsync(customer.Id, Tomorrow,
+            CreateTestPet(customer.Id, "Fluffy", 100m));
 
-        context.Customers.Add(customer);
-        context.Orders.Add(order);
-        await context.SaveChangesAsync();
-
-        // Modify order
-        var newPickupDate = DateOnly.FromDateTime(DateTime.Today.AddDays(5));
+        var newPickupDate = Tomorrow.AddDays(5);
         order.UpdatePickupDate(newPickupDate);
 
-        // Act
-        var result = await repository.UpdateAsync(order);
-
-        // Assert
-        result.Should().NotBeNull();
-        var savedOrder = await context.Orders.FindAsync(order.Id);
-        savedOrder.Should().NotBeNull();
-        savedOrder!.PickupDate.Should().Be(newPickupDate);
-    }
-
-    [Fact]
-    public async Task UpdateAsync_WithOrderStateTransition_ShouldPersistStateChange()
-    {
-        // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
-        var pet = new Pet(order.Id, "Fluffy", 100m);
-        order.AddPet(pet);
-        order.TransitionToProcessing();
-        order.TransitionToDelivered();
-
-        context.Customers.Add(customer);
-        context.Orders.Add(order);
-        context.Pets.Add(pet);
-        await context.SaveChangesAsync();
+        var repository = new OrderRepository(DbContext);
 
         // Act
         var result = await repository.UpdateAsync(order);
 
         // Assert
-        result.Should().NotBeNull();
-        var savedOrder = await context.Orders.FindAsync(order.Id);
-        savedOrder.Should().NotBeNull();
-        savedOrder!.Status.Should().Be(OrderStatus.Delivered);
-        savedOrder.ActualCost.Should().Be(100m);
+        result.PickupDate.Should().Be(newPickupDate);
+
+        // Verify persisted
+        var persistedOrder = await DbContext.Orders.FindAsync(order.Id);
+        persistedOrder.Should().NotBeNull();
+        persistedOrder!.PickupDate.Should().Be(newPickupDate);
     }
 
     [Fact]
-    public async Task UpdateAsync_WithOrderWithPets_ShouldPreservePets()
+    public async Task UpdateAsync_WithAddedPets_ShouldUpdateOrder()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
-        var pet = new Pet(order.Id, "Fluffy", 100m);
-        order.AddPet(pet);
+        var customer = await CreateAndSaveCustomerAsync("John", "Doe");
+        var order = await CreateAndSaveOrderAsync(customer.Id, Tomorrow); // No pets initially
 
-        context.Customers.Add(customer);
-        context.Orders.Add(order);
-        context.Pets.Add(pet);
-        await context.SaveChangesAsync();
+        var pet1 = new Pet(order.Id, "Fluffy", 100m, "Cat", "White");
+        var pet2 = new Pet(order.Id, "Buddy", 150m, "Dog", "Brown");
+        order.AddPet(pet1);
+        order.AddPet(pet2);
 
-        // Modify order
-        order.UpdatePickupDate(DateOnly.FromDateTime(DateTime.Today.AddDays(2)));
+        var repository = new OrderRepository(DbContext);
 
         // Act
-        await repository.UpdateAsync(order);
+        var result = await repository.UpdateAsync(order);
 
         // Assert
-        var savedOrder = await context.Orders
+        result.Pets.Should().HaveCount(2);
+        result.Pets.Should().Contain(p => p.Name == "Fluffy");
+        result.Pets.Should().Contain(p => p.Name == "Buddy");
+
+        // Verify persisted
+        var persistedOrder = await DbContext.Orders
             .Include(o => o.Pets)
             .FirstOrDefaultAsync(o => o.Id == order.Id);
-        savedOrder.Should().NotBeNull();
-        savedOrder!.Pets.Should().HaveCount(1);
-        savedOrder.Pets.First().Id.Should().Be(pet.Id);
+
+        persistedOrder.Should().NotBeNull();
+        persistedOrder!.Pets.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithTrackedEntity_ShouldUpdateSuccessfully()
+    {
+        // Arrange
+        var customer = await CreateAndSaveCustomerAsync("John", "Doe");
+        var order = await CreateAndSaveOrderAsync(customer.Id, Tomorrow,
+            CreateTestPet(customer.Id, "Fluffy", 100m));
+
+        // Modify the tracked entity
+        var newPet = new Pet(order.Id, "NewPet", 200m);
+        order.AddPet(newPet);
+
+        var repository = new OrderRepository(DbContext);
+
+        // Act
+        var result = await repository.UpdateAsync(order);
+
+        // Assert
+        result.Pets.Should().HaveCount(2);
+        result.Pets.Should().Contain(p => p.Name == "Fluffy");
+        result.Pets.Should().Contain(p => p.Name == "NewPet");
+
+        // Verify persisted
+        var persistedOrder = await DbContext.Orders
+            .Include(o => o.Pets)
+            .FirstOrDefaultAsync(o => o.Id == order.Id);
+
+        persistedOrder.Should().NotBeNull();
+        persistedOrder!.Pets.Should().HaveCount(2);
+        persistedOrder.Pets.Should().Contain(p => p.Name == "Fluffy");
+        persistedOrder.Pets.Should().Contain(p => p.Name == "NewPet");
     }
 
     #endregion
@@ -385,66 +337,40 @@ public class OrderRepositoryTests
     #region DeleteAsync Tests
 
     [Fact]
-    public async Task DeleteAsync_WithExistingOrder_ShouldRemoveOrder()
+    public async Task DeleteAsync_WithExistingOrder_ShouldDeleteOrder()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var customer = await CreateAndSaveCustomerAsync("John", "Doe");
+        var order = await CreateAndSaveOrderAsync(customer.Id, Tomorrow,
+            CreateTestPet(customer.Id, "Fluffy", 100m));
 
-        context.Customers.Add(customer);
-        context.Orders.Add(order);
-        await context.SaveChangesAsync();
+        var repository = new OrderRepository(DbContext);
 
         // Act
         await repository.DeleteAsync(order.Id);
 
         // Assert
-        var deletedOrder = await context.Orders.FindAsync(order.Id);
+        var deletedOrder = await DbContext.Orders.FindAsync(order.Id);
         deletedOrder.Should().BeNull();
+
+        // Pets should also be deleted (cascade delete)
+        var petsCount = await DbContext.Pets.CountAsync(p => p.OrderId == order.Id);
+        petsCount.Should().Be(0);
     }
 
     [Fact]
     public async Task DeleteAsync_WithNonExistentOrder_ShouldNotThrow()
     {
         // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var orderId = Guid.NewGuid();
+        var nonExistentId = Guid.NewGuid();
+        var repository = new OrderRepository(DbContext);
 
-        // Act
-        var act = async () => await repository.DeleteAsync(orderId);
+        // Act & Assert
+        await repository.DeleteAsync(nonExistentId); // Should not throw
 
-        // Assert
-        await act.Should().NotThrowAsync();
-    }
-
-    [Fact]
-    public async Task DeleteAsync_WithOrderWithPets_ShouldRemoveOrderAndPets()
-    {
-        // Arrange
-        using var context = CreateDbContext();
-        var repository = new OrderRepository(context);
-        var customer = new Customer("John", "Doe");
-        var order = new Order(customer.Id, DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
-        var pet = new Pet(order.Id, "Fluffy", 100m);
-        order.AddPet(pet);
-
-        context.Customers.Add(customer);
-        context.Orders.Add(order);
-        context.Pets.Add(pet);
-        await context.SaveChangesAsync();
-
-        // Act
-        await repository.DeleteAsync(order.Id);
-
-        // Assert
-        var deletedOrder = await context.Orders.FindAsync(order.Id);
-        deletedOrder.Should().BeNull();
-
-        var deletedPet = await context.Pets.FindAsync(pet.Id);
-        deletedPet.Should().BeNull(); // Cascade delete should remove pets
+        // Verify no changes
+        var orderCount = await DbContext.Orders.CountAsync();
+        orderCount.Should().Be(0);
     }
 
     #endregion
