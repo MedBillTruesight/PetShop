@@ -423,3 +423,5 @@ FodyWeavers.xsd
 execution/
 docs/
 .cursor/
+coverage-report/
+coverage-results/
