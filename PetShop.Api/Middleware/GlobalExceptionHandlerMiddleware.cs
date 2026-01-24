@@ -117,16 +117,16 @@ public class GlobalExceptionHandlerMiddleware
     private static string GetNotFoundErrorCode(Exception exception)
     {
         var message = exception.Message.ToLowerInvariant();
-        
+
         if (message.Contains("customer"))
             return "CUSTOMER_NOT_FOUND";
-        
+
         if (message.Contains("order"))
             return "ORDER_NOT_FOUND";
-        
+
         if (message.Contains("pet"))
             return "PET_NOT_FOUND";
-        
+
         return "RESOURCE_NOT_FOUND";
     }
 
@@ -136,10 +136,10 @@ public class GlobalExceptionHandlerMiddleware
         // Semantic validation errors (like invalid dates) should be 422
         // For now, default to 409. Can be enhanced later based on exception message or custom properties.
         var message = exception.Message.ToLowerInvariant();
-        
+
         if (message.Contains("date") && (message.Contains("past") || message.Contains("invalid")))
             return HttpStatusCode.UnprocessableEntity;
-        
+
         return HttpStatusCode.Conflict;
     }
 }

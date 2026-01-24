@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using PetShop.Domain;
-using System.ComponentModel.DataAnnotations;
 
 namespace PetShop.Api.Controllers;
 

@@ -1,5 +1,5 @@
-using System.Text.Json.Serialization;
 using PetShop.Domain;
+using System.Text.Json.Serialization;
 
 namespace PetShop.Api.DTOs;
 

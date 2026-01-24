@@ -35,7 +35,7 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var content = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
-        
+
         errorResponse.Should().NotBeNull();
         errorResponse!.Error.Should().NotBeNull();
         errorResponse.Error.Code.Should().Be("CUSTOMER_NOT_FOUND");
@@ -52,7 +52,7 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var content = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
-        
+
         errorResponse.Should().NotBeNull();
         errorResponse!.Error.Should().NotBeNull();
         errorResponse.Error.Code.Should().Be("ORDER_INVALID_STATE");
@@ -69,7 +69,7 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var content = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
-        
+
         errorResponse.Should().NotBeNull();
         errorResponse!.Error.Should().NotBeNull();
         errorResponse.Error.Code.Should().Be("BUSINESS_RULE_VIOLATION");
@@ -86,7 +86,7 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
         var content = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
-        
+
         errorResponse.Should().NotBeNull();
         errorResponse!.Error.Should().NotBeNull();
         errorResponse.Error.Code.Should().Be("BUSINESS_RULE_VIOLATION");
@@ -103,7 +103,7 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var content = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
-        
+
         errorResponse.Should().NotBeNull();
         errorResponse!.Error.Should().NotBeNull();
         errorResponse.Error.Code.Should().Be("VALIDATION_ERROR");
@@ -122,7 +122,7 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var content = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
-        
+
         errorResponse.Should().NotBeNull();
         errorResponse!.Error.Should().NotBeNull();
         errorResponse.Error.Code.Should().Be("VALIDATION_ERROR");
@@ -141,7 +141,7 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         var content = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
-        
+
         errorResponse.Should().NotBeNull();
         errorResponse!.Error.Should().NotBeNull();
         errorResponse.Error.Code.Should().Be("INTERNAL_ERROR");
@@ -159,7 +159,7 @@ public class ErrorHandlingTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var content = await response.Content.ReadAsStringAsync();
         var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
-        
+
         // Verify structure matches API contract
         errorResponse.Should().NotBeNull();
         errorResponse!.Error.Should().NotBeNull();

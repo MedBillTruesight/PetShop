@@ -54,7 +54,7 @@ public class CustomersControllerTests : IClassFixture<WebApplicationFactory<Prog
         customer.Id.Should().NotBeEmpty();
         customer.EstimatedPaymentDue.Should().Be(0m);
         customer.ActualPaymentDue.Should().Be(0m);
-        
+
         // Verify Location header (accepts both v1 and v1.0 format)
         response.Headers.Location.Should().NotBeNull();
         var location = response.Headers.Location!.ToString();

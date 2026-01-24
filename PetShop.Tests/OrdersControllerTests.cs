@@ -564,7 +564,7 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
             Price = price
         };
         var response = await _client.PostAsJsonAsync($"/api/v1/orders/{orderId}/pets", request);
-        
+
         // Only ensure success if we got a successful status code
         // Some tests intentionally test error scenarios (like 409 Conflict)
         if (response.IsSuccessStatusCode)
@@ -572,7 +572,7 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
             var order = await response.Content.ReadFromJsonAsync<OrderDto>(_jsonOptions) ?? throw new Exception("Failed to add pet");
             return order.Pets.Last();
         }
-        
+
         // If not successful, throw with the actual status code for debugging
         throw new HttpRequestException($"Request failed with status {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
     }

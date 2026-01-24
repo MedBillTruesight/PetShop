@@ -313,7 +313,7 @@ public class CustomerRepositoryTests
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*required relationship*");
-        
+
         // Verify customer still exists
         var existingCustomer = await context.Customers.FindAsync(customer.Id);
         existingCustomer.Should().NotBeNull();
