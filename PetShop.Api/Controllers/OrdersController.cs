@@ -55,6 +55,19 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>
+    /// Gets all orders with calculated costs.
+    /// </summary>
+    /// <returns>A collection of all orders with cost calculations.</returns>
+    /// <response code="200">Orders retrieved successfully.</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<OrderDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllOrders()
+    {
+        var orders = await _orderService.GetAllOrdersAsync();
+        return Ok(orders);
+    }
+
+    /// <summary>
     /// Gets an order by its unique identifier with calculated cost.
     /// </summary>
     /// <param name="id">The unique identifier of the order.</param>

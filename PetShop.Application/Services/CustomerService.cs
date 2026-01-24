@@ -109,6 +109,70 @@ public class CustomerService
     }
 
     /// <summary>
+    /// Gets all customers with their payment calculations.
+    /// </summary>
+    /// <returns>A collection of all customers as DTOs with payment calculations.</returns>
+    public async Task<IEnumerable<CustomerDto>> GetAllCustomersAsync()
+    {
+        var customers = await _customerRepository.GetAllAsync();
+        var orders = await _orderRepository.GetAllAsync();
+        var ordersByCustomer = orders.GroupBy(o => o.CustomerId).ToDictionary(g => g.Key, g => g.ToList());
+
+        var result = new List<CustomerDto>();
+        foreach (var customer in customers)
+        {
+            var customerOrders = ordersByCustomer.TryGetValue(customer.Id, out var ordersList) ? ordersList : new List<Order>();
+            var estimatedPaymentDue = CalculateEstimatedPaymentDue(customerOrders);
+            var actualPaymentDue = CalculateActualPaymentDue(customerOrders);
+            result.Add(MapToDto(customer, estimatedPaymentDue, actualPaymentDue));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets all orders for a specific customer with cost calculations.
+    /// </summary>
+    /// <param name="customerId">The unique identifier of the customer.</param>
+    /// <returns>A collection of the customer's orders as DTOs with cost calculations.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when customer is not found.</exception>
+    public async Task<IEnumerable<OrderDto>> GetCustomerOrdersAsync(Guid customerId)
+    {
+        var customer = await _customerRepository.GetByIdAsync(customerId);
+        if (customer == null)
+        {
+            throw new KeyNotFoundException($"Customer with ID {customerId} was not found.");
+        }
+
+        var orders = await _orderRepository.GetByCustomerIdAsync(customerId);
+        return orders.Select(MapOrderToDto);
+    }
+
+    /// <summary>
+    /// Deletes a customer by their unique identifier.
+    /// Business rule: cannot delete if the customer has any orders.
+    /// </summary>
+    /// <param name="id">The unique identifier of the customer to delete.</param>
+    /// <exception cref="KeyNotFoundException">Thrown when customer is not found.</exception>
+    /// <exception cref="BusinessRuleViolationException">Thrown when customer has orders and cannot be deleted.</exception>
+    public async Task DeleteCustomerAsync(Guid id)
+    {
+        var customer = await _customerRepository.GetByIdAsync(id);
+        if (customer == null)
+        {
+            throw new KeyNotFoundException($"Customer with ID {id} was not found.");
+        }
+
+        // Business rule: cannot delete customer if they have any orders
+        if (customer.Orders.Any())
+        {
+            throw new BusinessRuleViolationException($"Cannot delete customer '{customer.FirstName} {customer.LastName}' because they have {customer.Orders.Count} order(s).");
+        }
+
+        await _customerRepository.DeleteAsync(id);
+    }
+
+    /// <summary>
     /// Calculates the estimated payment due from non-delivered orders.
     /// Sum of estimated costs from orders with status Open or Processing.
     /// </summary>
@@ -132,6 +196,45 @@ public class CustomerService
         return orders
             .Where(o => o.Status == OrderStatus.Delivered && o.ActualCost.HasValue)
             .Sum(o => o.ActualCost!.Value);
+    }
+
+    /// <summary>
+    /// Maps a domain Order entity to an OrderDto.
+    /// Calculates cost based on order status.
+    /// </summary>
+    /// <param name="order">The order entity to map.</param>
+    /// <returns>The mapped OrderDto.</returns>
+    private static OrderDto MapOrderToDto(Order order)
+    {
+        var dto = new OrderDto
+        {
+            Id = order.Id,
+            CustomerId = order.CustomerId,
+            Status = order.Status,
+            PickupDate = order.PickupDate,
+            Pets = order.Pets.Select(p => new PetDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Kind = p.Kind,
+                Color = p.Color
+            }).ToList()
+        };
+
+        // Calculate cost based on status
+        if (order.Status == OrderStatus.Delivered)
+        {
+            dto.ActualCost = order.ActualCost;
+            dto.EstimatedCost = null;
+        }
+        else
+        {
+            dto.EstimatedCost = order.CalculateEstimatedCost();
+            dto.ActualCost = null;
+        }
+
+        return dto;
     }
 
     /// <summary>

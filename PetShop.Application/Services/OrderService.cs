@@ -69,6 +69,16 @@ public class OrderService
     }
 
     /// <summary>
+    /// Gets all orders with calculated costs.
+    /// </summary>
+    /// <returns>A collection of all orders as DTOs with cost calculations.</returns>
+    public async Task<IEnumerable<OrderDto>> GetAllOrdersAsync()
+    {
+        var orders = await _orderRepository.GetAllAsync();
+        return orders.Select(MapToDto);
+    }
+
+    /// <summary>
     /// Updates an existing order's pickup date.
     /// </summary>
     /// <param name="id">The unique identifier of the order to update.</param>

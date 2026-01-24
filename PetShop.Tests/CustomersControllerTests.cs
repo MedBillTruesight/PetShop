@@ -257,4 +257,132 @@ public class CustomersControllerTests : IClassFixture<WebApplicationFactory<Prog
         customer!.EstimatedPaymentDue.Should().Be(100m, "Order1 (Processing) contributes estimated cost 100");
         customer.ActualPaymentDue.Should().Be(200m, "Order2 (Delivered) contributes actual cost 200");
     }
+
+    [Fact]
+    public async Task GetAllCustomers_ReturnsListOfCustomers()
+    {
+        // Arrange - Create multiple customers
+        var customer1 = await CreateTestCustomerAsync("John", "Doe");
+        var customer2 = await CreateTestCustomerAsync("Jane", "Smith");
+
+        // Act
+        var response = await _client.GetAsync("/api/v1/customers");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var customers = await response.Content.ReadFromJsonAsync<CustomerDto[]>(_jsonOptions);
+        customers.Should().NotBeNull();
+        customers!.Length.Should().BeGreaterThanOrEqualTo(2);
+        customers.Should().Contain(c => c.FirstName == "John" && c.LastName == "Doe");
+        customers.Should().Contain(c => c.FirstName == "Jane" && c.LastName == "Smith");
+    }
+
+    [Fact]
+    public async Task GetCustomerOrders_ReturnsCustomerOrders()
+    {
+        // Arrange - Create customer and orders
+        var customer = await CreateTestCustomerAsync("Order", "Test");
+
+        var order1Req = new CreateOrderRequest
+        {
+            CustomerId = customer.Id,
+            PickupDate = DateOnly.FromDateTime(DateTime.Today.AddDays(1))
+        };
+        var order1Res = await _client.PostAsJsonAsync("/api/v1/orders", order1Req);
+        order1Res.EnsureSuccessStatusCode();
+
+        var order2Req = new CreateOrderRequest
+        {
+            CustomerId = customer.Id,
+            PickupDate = DateOnly.FromDateTime(DateTime.Today.AddDays(2))
+        };
+        var order2Res = await _client.PostAsJsonAsync("/api/v1/orders", order2Req);
+        order2Res.EnsureSuccessStatusCode();
+
+        // Act
+        var response = await _client.GetAsync($"/api/v1/customers/{customer.Id}/orders");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var orders = await response.Content.ReadFromJsonAsync<OrderDto[]>(_jsonOptions);
+        orders.Should().NotBeNull();
+        orders!.Length.Should().Be(2);
+        orders.Should().AllSatisfy(o => o.CustomerId.Should().Be(customer.Id));
+    }
+
+    [Fact]
+    public async Task GetCustomerOrders_NonExistentCustomer_Returns404NotFound()
+    {
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.GetAsync($"/api/v1/customers/{nonExistentId}/orders");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteCustomer_WithoutOrders_Returns204NoContent()
+    {
+        // Arrange - Create customer without orders
+        var customer = await CreateTestCustomerAsync("Delete", "Test");
+
+        // Act
+        var response = await _client.DeleteAsync($"/api/v1/customers/{customer.Id}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        // Verify customer is deleted
+        var getResponse = await _client.GetAsync($"/api/v1/customers/{customer.Id}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteCustomer_WithOrders_Returns409Conflict()
+    {
+        // Arrange - Create customer with order
+        var customer = await CreateTestCustomerAsync("Delete", "Fail");
+
+        var orderReq = new CreateOrderRequest
+        {
+            CustomerId = customer.Id,
+            PickupDate = DateOnly.FromDateTime(DateTime.Today.AddDays(1))
+        };
+        await _client.PostAsJsonAsync("/api/v1/orders", orderReq);
+
+        // Act
+        var response = await _client.DeleteAsync($"/api/v1/customers/{customer.Id}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task DeleteCustomer_NonExistentCustomer_Returns404NotFound()
+    {
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.DeleteAsync($"/api/v1/customers/{nonExistentId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    private async Task<CustomerDto> CreateTestCustomerAsync(string firstName = "Test", string lastName = "Customer")
+    {
+        var request = new CreateCustomerRequest
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            Email = $"{firstName.ToLower()}.{lastName.ToLower()}@example.com"
+        };
+        var response = await _client.PostAsJsonAsync("/api/v1/customers", request);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CustomerDto>(_jsonOptions) ?? throw new Exception("Failed to create customer");
+    }
 }

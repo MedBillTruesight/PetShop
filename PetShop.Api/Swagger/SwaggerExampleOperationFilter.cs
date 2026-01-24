@@ -51,9 +51,15 @@ public sealed class SwaggerExampleOperationFilter : IOperationFilter
             case ("api/v{version}/customers", "POST"):
                 AddExampleToResponse(operation, "201", CreateCustomerResponseExample());
                 break;
+            case ("api/v{version}/customers", "GET"):
+                AddExampleToResponse(operation, "200", CreateCustomersListResponseExample());
+                break;
             case ("api/v{version}/customers/{id}", "GET"):
             case ("api/v{version}/customers/{id}", "PUT"):
                 AddExampleToResponse(operation, "200", CreateCustomerResponseExample());
+                break;
+            case ("api/v{version}/orders", "GET"):
+                AddExampleToResponse(operation, "200", CreateOrdersListResponseExample());
                 break;
             case ("api/v{version}/orders", "POST"):
                 AddExampleToResponse(operation, "201", CreateOrderResponseExample());
@@ -62,6 +68,9 @@ public sealed class SwaggerExampleOperationFilter : IOperationFilter
             case ("api/v{version}/orders/{id}", "PATCH"):
             case ("api/v{version}/orders/{id}/transition", "POST"):
                 AddExampleToResponse(operation, "200", CreateOrderResponseExample());
+                break;
+            case ("api/v{version}/customers/{id}/orders", "GET"):
+                AddExampleToResponse(operation, "200", CreateCustomerOrdersResponseExample());
                 break;
             default:
                 if (path.StartsWith("api/v{version}/orders/", StringComparison.Ordinal) && path.EndsWith("/pets", StringComparison.Ordinal) && method == "POST")
@@ -195,5 +204,58 @@ public sealed class SwaggerExampleOperationFilter : IOperationFilter
             }
         },
         ["estimatedCost"] = new OpenApiDouble(100.50)
+    };
+
+    private static OpenApiArray CreateCustomersListResponseExample() => new()
+    {
+        CreateCustomerResponseExample(),
+        new OpenApiObject
+        {
+            ["id"] = new OpenApiString("7b85f64-5717-4562-b3fc-2c963f66afa7"),
+            ["firstName"] = new OpenApiString("Jane"),
+            ["lastName"] = new OpenApiString("Smith"),
+            ["email"] = new OpenApiString("jane.smith@example.com"),
+            ["phone"] = new OpenApiString("555-9999"),
+            ["estimatedPaymentDue"] = new OpenApiDouble(150.00),
+            ["actualPaymentDue"] = new OpenApiDouble(250.00)
+        }
+    };
+
+    private static OpenApiArray CreateOrdersListResponseExample() => new()
+    {
+        CreateOrderResponseExample(),
+        new OpenApiObject
+        {
+            ["id"] = new OpenApiString("7b85f64-5717-4562-b3fc-2c963f66afa7"),
+            ["customerId"] = new OpenApiString("8c85f64-5717-4562-b3fc-2c963f66afa8"),
+            ["status"] = new OpenApiInteger(2),
+            ["pickupDate"] = new OpenApiString(DateOnly.FromDateTime(DateTime.Today.AddDays(2)).ToString(DateFormat)),
+            ["pets"] = new OpenApiArray
+            {
+                new OpenApiObject
+                {
+                    ["id"] = new OpenApiString("9d96f64-5717-4562-b3fc-2c963f66afa9"),
+                    ["name"] = new OpenApiString("Buddy"),
+                    ["price"] = new OpenApiDouble(150.00),
+                    ["kind"] = new OpenApiString("Dog"),
+                    ["color"] = new OpenApiString("Brown")
+                }
+            },
+            ["actualCost"] = new OpenApiDouble(150.00)
+        }
+    };
+
+    private static OpenApiArray CreateCustomerOrdersResponseExample() => new()
+    {
+        CreateOrderResponseExample(),
+        new OpenApiObject
+        {
+            ["id"] = new OpenApiString("7b85f64-5717-4562-b3fc-2c963f66afa7"),
+            ["customerId"] = new OpenApiString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+            ["status"] = new OpenApiInteger(2),
+            ["pickupDate"] = new OpenApiString(DateOnly.FromDateTime(DateTime.Today.AddDays(3)).ToString(DateFormat)),
+            ["pets"] = new OpenApiArray(),
+            ["actualCost"] = new OpenApiDouble(0.00)
+        }
     };
 }

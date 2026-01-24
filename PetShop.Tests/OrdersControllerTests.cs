@@ -28,6 +28,29 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         };
     }
 
+    #region Get All Orders Tests
+
+    [Fact]
+    public async Task GetAllOrders_ReturnsListOfOrders()
+    {
+        // Arrange - Create some orders
+        var order1 = await CreateTestOrderAsync();
+        var order2 = await CreateTestOrderAsync();
+
+        // Act
+        var response = await _client.GetAsync("/api/v1/orders");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var orders = await response.Content.ReadFromJsonAsync<OrderDto[]>(_jsonOptions);
+        orders.Should().NotBeNull();
+        orders!.Length.Should().BeGreaterThanOrEqualTo(2);
+        orders.Should().Contain(o => o.Id == order1.Id);
+        orders.Should().Contain(o => o.Id == order2.Id);
+    }
+
+    #endregion
+
     #region Create Order Tests
 
     [Fact]

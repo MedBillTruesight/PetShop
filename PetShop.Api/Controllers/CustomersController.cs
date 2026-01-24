@@ -89,4 +89,52 @@ public class CustomersController : ControllerBase
         var customer = await _customerService.UpdateCustomerAsync(id, request);
         return Ok(customer);
     }
+
+    /// <summary>
+    /// Gets all customers with their payment calculations.
+    /// </summary>
+    /// <returns>A collection of all customers with payment due amounts.</returns>
+    /// <response code="200">Customers retrieved successfully.</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<CustomerDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<CustomerDto>>> GetAllCustomers()
+    {
+        var customers = await _customerService.GetAllCustomersAsync();
+        return Ok(customers);
+    }
+
+    /// <summary>
+    /// Gets all orders for a specific customer with cost calculations.
+    /// </summary>
+    /// <param name="id">The unique identifier of the customer.</param>
+    /// <returns>A collection of the customer's orders with cost calculations.</returns>
+    /// <response code="200">Customer orders retrieved successfully.</response>
+    /// <response code="404">Customer with the specified ID does not exist.</response>
+    [HttpGet("{id}/orders")]
+    [ProducesResponseType(typeof(IEnumerable<OrderDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetCustomerOrders(Guid id)
+    {
+        var orders = await _customerService.GetCustomerOrdersAsync(id);
+        return Ok(orders);
+    }
+
+    /// <summary>
+    /// Deletes a customer by their unique identifier.
+    /// Business rule: cannot delete if the customer has any orders.
+    /// </summary>
+    /// <param name="id">The unique identifier of the customer to delete.</param>
+    /// <returns>No content on successful deletion.</returns>
+    /// <response code="204">Customer deleted successfully.</response>
+    /// <response code="404">Customer with the specified ID does not exist.</response>
+    /// <response code="409">Customer has orders and cannot be deleted.</response>
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> DeleteCustomer(Guid id)
+    {
+        await _customerService.DeleteCustomerAsync(id);
+        return NoContent();
+    }
 }
