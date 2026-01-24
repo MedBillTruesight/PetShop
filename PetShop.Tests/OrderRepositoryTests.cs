@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using PetShop.Domain;
 using PetShop.Infrastructure.Repositories;
 
+namespace PetShop.Tests;
+
 /// <summary>
 /// Integration tests for the OrderRepository.
 /// Tests use real DbContext with InMemory provider to verify actual database operations.
