@@ -88,7 +88,9 @@ public class Program
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
+        // Enable Swagger in Development or when explicitly enabled
+        if (app.Environment.IsDevelopment() || 
+            builder.Configuration.GetValue<bool>("EnableSwagger", false))
         {
             app.UseSwagger();
             app.UseSwaggerUI(options =>
@@ -105,7 +107,11 @@ public class Program
             });
         }
 
-        app.UseHttpsRedirection();
+        // Only use HTTPS redirection if HTTPS is configured
+        if (app.Configuration.GetValue<bool>("UseHttpsRedirection", false))
+        {
+            app.UseHttpsRedirection();
+        }
 
         // Register global exception handler middleware (must be early in pipeline)
         app.UseMiddleware<Middleware.GlobalExceptionHandlerMiddleware>();

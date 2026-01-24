@@ -425,3 +425,5 @@ docs/
 .cursor/
 coverage-report/
 coverage-results/
+scripts/
+nginx/

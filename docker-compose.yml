@@ -1,0 +1,20 @@
+services:
+  petshop-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: petshop-api
+    ports:
+      - "${API_PORT:-7052}:7052"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:7052
+      - EnableSwagger=true
+      - UseHttpsRedirection=false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:7052/swagger/index.html || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
