@@ -190,7 +190,7 @@ public class Order
         if (pickupDate < today)
         {
             throw new BusinessRuleViolationException(
-                $"Pickup date must be today or in the future. Provided date: {pickupDate:yyyy-MM-dd}, Today: {today:yyyy-MM-dd}");
+                $"Invalid pickup date: must be today or in the future. Provided date: {pickupDate:yyyy-MM-dd}, Today: {today:yyyy-MM-dd}");
         }
     }
 }

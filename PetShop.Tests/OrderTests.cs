@@ -72,7 +72,7 @@ public class OrderTests
 
         // Assert
         act.Should().Throw<BusinessRuleViolationException>()
-            .WithMessage($"Pickup date must be today or in the future. Provided date: {pastDate:yyyy-MM-dd}, Today: {Today:yyyy-MM-dd}");
+            .WithMessage($"Invalid pickup date: must be today or in the future. Provided date: {pastDate:yyyy-MM-dd}, Today: {Today:yyyy-MM-dd}");
     }
 
     [Fact]
@@ -397,7 +397,7 @@ public class OrderTests
 
         // Assert
         act.Should().Throw<BusinessRuleViolationException>()
-            .WithMessage($"Pickup date must be today or in the future. Provided date: {pastDate:yyyy-MM-dd}, Today: {Today:yyyy-MM-dd}");
+            .WithMessage($"Invalid pickup date: must be today or in the future. Provided date: {pastDate:yyyy-MM-dd}, Today: {Today:yyyy-MM-dd}");
     }
 
     [Fact]

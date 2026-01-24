@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using PetShop.Api;
+using PetShop.Api.DTOs;
 using PetShop.Application.DTOs;
+using PetShop.Domain;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -207,29 +209,52 @@ public class CustomersControllerTests : IClassFixture<WebApplicationFactory<Prog
     }
 
     [Fact]
-    public async Task GetCustomer_WithOrders_IncludesPaymentCalculations()
+    public async Task GetCustomer_WithOrders_ReturnsEstimatedAndActualPaymentDue()
     {
-        // This test would require creating orders, which depends on OrdersController
-        // For now, we verify that payment calculations are included in the response
-        // A more comprehensive test can be added when OrdersController is implemented
-        
-        // Arrange - Create a customer
+        // Task: "Reading the Customer record should return an estimated and actual payment due based on their orders."
+        // Arrange - Create customer
         var createRequest = new CreateCustomerRequest
         {
             FirstName = "Payment",
             LastName = "Test"
         };
         var createResponse = await _client.PostAsJsonAsync("/api/v1/customers", createRequest);
+        createResponse.EnsureSuccessStatusCode();
         var createdCustomer = await createResponse.Content.ReadFromJsonAsync<CustomerDto>(_jsonOptions);
 
+        // Order 1: Open with one pet (100) -> contributes to estimated
+        var order1Req = new CreateOrderRequest
+        {
+            CustomerId = createdCustomer!.Id,
+            PickupDate = DateOnly.FromDateTime(DateTime.Today.AddDays(1))
+        };
+        var order1Res = await _client.PostAsJsonAsync("/api/v1/orders", order1Req);
+        order1Res.EnsureSuccessStatusCode();
+        var order1 = await order1Res.Content.ReadFromJsonAsync<OrderDto>(_jsonOptions);
+        await _client.PostAsJsonAsync($"/api/v1/orders/{order1!.Id}/pets", new AddPetRequest { Name = "Pet1", Price = 100m });
+        await _client.PostAsJsonAsync($"/api/v1/orders/{order1.Id}/transition", new TransitionOrderRequest { Status = OrderStatus.Processing });
+
+        // Order 2: Delivered with one pet (200) -> contributes to actual
+        var order2Req = new CreateOrderRequest
+        {
+            CustomerId = createdCustomer.Id,
+            PickupDate = DateOnly.FromDateTime(DateTime.Today.AddDays(2))
+        };
+        var order2Res = await _client.PostAsJsonAsync("/api/v1/orders", order2Req);
+        order2Res.EnsureSuccessStatusCode();
+        var order2 = await order2Res.Content.ReadFromJsonAsync<OrderDto>(_jsonOptions);
+        await _client.PostAsJsonAsync($"/api/v1/orders/{order2!.Id}/pets", new AddPetRequest { Name = "Pet2", Price = 200m });
+        await _client.PostAsJsonAsync($"/api/v1/orders/{order2.Id}/transition", new TransitionOrderRequest { Status = OrderStatus.Processing });
+        await _client.PostAsJsonAsync($"/api/v1/orders/{order2.Id}/transition", new TransitionOrderRequest { Status = OrderStatus.Delivered });
+
         // Act
-        var response = await _client.GetAsync($"/api/v1/customers/{createdCustomer!.Id}");
+        var response = await _client.GetAsync($"/api/v1/customers/{createdCustomer.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var customer = await response.Content.ReadFromJsonAsync<CustomerDto>(_jsonOptions);
         customer.Should().NotBeNull();
-        customer!.EstimatedPaymentDue.Should().BeGreaterThanOrEqualTo(0m);
-        customer.ActualPaymentDue.Should().BeGreaterThanOrEqualTo(0m);
+        customer!.EstimatedPaymentDue.Should().Be(100m, "Order1 (Processing) contributes estimated cost 100");
+        customer.ActualPaymentDue.Should().Be(200m, "Order2 (Delivered) contributes actual cost 200");
     }
 }

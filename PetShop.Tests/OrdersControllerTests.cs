@@ -83,6 +83,24 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    [Fact]
+    public async Task CreateOrder_PickupDateInPast_Returns422UnprocessableEntity()
+    {
+        // Arrange - Task: "Pickup Date must be today or in the future"
+        var customer = await CreateTestCustomerAsync();
+        var request = new CreateOrderRequest
+        {
+            CustomerId = customer.Id,
+            PickupDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/v1/orders", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+    }
+
     #endregion
 
     #region Get Order Tests
@@ -142,6 +160,25 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         var updatedOrder = await response.Content.ReadFromJsonAsync<OrderDto>(_jsonOptions);
         updatedOrder.Should().NotBeNull();
         updatedOrder!.PickupDate.Should().Be(newPickupDate);
+    }
+
+    [Fact]
+    public async Task UpdateOrder_ProcessingOrder_CanUpdatePickupDateOnly_Returns200Ok()
+    {
+        // Task: "When an order is 'Processing' only the Pickup Date can be edited."
+        var order = await CreateTestOrderAsync();
+        await AddPetToOrderAsync(order.Id);
+        await TransitionOrderAsync(order.Id, OrderStatus.Processing);
+
+        var newPickupDate = DateOnly.FromDateTime(DateTime.Today.AddDays(5));
+        var updateRequest = new UpdateOrderRequest { PickupDate = newPickupDate };
+
+        var response = await _client.PatchAsJsonAsync($"/api/v1/orders/{order.Id}", updateRequest);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await response.Content.ReadFromJsonAsync<OrderDto>(_jsonOptions);
+        updated!.Status.Should().Be(OrderStatus.Processing);
+        updated.PickupDate.Should().Be(newPickupDate);
     }
 
     [Fact]

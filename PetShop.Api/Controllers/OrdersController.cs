@@ -34,10 +34,12 @@ public class OrdersController : ControllerBase
     /// <response code="201">Order created successfully.</response>
     /// <response code="400">Validation failure (missing required fields, invalid pickup date).</response>
     /// <response code="404">Customer with the specified ID does not exist.</response>
+    /// <response code="422">Semantic validation failure (e.g., pickup date in the past).</response>
     [HttpPost]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderRequest request)
     {
         if (request == null)
@@ -79,11 +81,13 @@ public class OrdersController : ControllerBase
     /// <response code="400">Validation failure (missing required fields, invalid pickup date).</response>
     /// <response code="404">Order with the specified ID does not exist.</response>
     /// <response code="409">Order is in Delivered status and cannot be modified.</response>
+    /// <response code="422">Semantic validation failure (e.g., pickup date in the past).</response>
     [HttpPatch("{id}")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<ActionResult<OrderDto>> UpdateOrder(Guid id, [FromBody] UpdateOrderRequest request)
     {
         if (request == null)
@@ -106,11 +110,13 @@ public class OrdersController : ControllerBase
     /// <response code="400">Validation failure (missing required fields).</response>
     /// <response code="404">Order with the specified ID does not exist.</response>
     /// <response code="409">Invalid state transition (e.g., order has no pets, or invalid transition path).</response>
+    /// <response code="422">Semantic validation failure (e.g., pickup date in the past).</response>
     [HttpPost("{id}/transition")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<ActionResult<OrderDto>> TransitionOrder(Guid id, [FromBody] TransitionOrderRequest request)
     {
         if (request == null)

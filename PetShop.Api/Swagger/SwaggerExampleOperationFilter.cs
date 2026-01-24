@@ -78,6 +78,7 @@ public sealed class SwaggerExampleOperationFilter : IOperationFilter
             ("400", "VALIDATION_ERROR", "Required parameter 'request' cannot be null."),
             ("404", "ORDER_NOT_FOUND", "Order with ID {id} was not found."),
             ("409", "ORDER_INVALID_STATE", "Cannot add pets to order in Processing status. Pets can only be added when order is Open."),
+            ("422", "INVALID_PICKUP_DATE", "Pickup date must be today or in the future."),
         })
         {
             if (!operation.Responses.TryGetValue(status, out var response))
@@ -135,7 +136,7 @@ public sealed class SwaggerExampleOperationFilter : IOperationFilter
 
     private static OpenApiObject CreateTransitionOrderRequestExample() => new()
     {
-        ["status"] = new OpenApiInteger(1) // Processing
+        ["targetStatus"] = new OpenApiInteger(1) // Processing
     };
 
     private static OpenApiObject CreateAddPetRequestExample() => new()
