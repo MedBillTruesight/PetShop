@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using PetShop.Api.DTOs;
 using PetShop.Domain;
 using System.Net;
@@ -97,6 +98,12 @@ public class GlobalExceptionHandlerMiddleware
                 argEx.ParamName != null
                     ? new Dictionary<string, object> { { "parameter", argEx.ParamName } }
                     : null
+            ),
+            DbUpdateConcurrencyException => (
+                HttpStatusCode.Conflict,
+                "CONCURRENCY_ERROR",
+                "The resource was modified by another operation. Please refresh and try again.",
+                null
             ),
             _ => (
                 HttpStatusCode.InternalServerError,

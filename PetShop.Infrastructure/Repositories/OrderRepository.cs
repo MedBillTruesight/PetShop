@@ -78,7 +78,35 @@ public class OrderRepository : IOrderRepository
     /// <returns>The updated order.</returns>
     public async Task<Order> UpdateAsync(Order order)
     {
-        _context.Orders.Update(order);
+        var entry = _context.Entry(order);
+
+        if (entry.State == EntityState.Detached)
+        {
+            // Entity is not tracked - attach and mark as modified
+            // This will also handle new pets in the collection
+            _context.Orders.Update(order);
+        }
+        else
+        {
+            // Entity is already tracked - ensure new pets are explicitly Added.
+            // Workaround for EF Core bug: adding a child to a tracked parent's collection
+            // can mark the child as Modified instead of Added, causing UPDATE instead of
+            // INSERT and DbUpdateConcurrencyException. We never modify existing pets
+            // (only add/remove), so any Modified pet here is a new one wrongly marked.
+            foreach (var pet in order.Pets)
+            {
+                var petEntry = _context.Entry(pet);
+                if (petEntry.State == EntityState.Detached)
+                {
+                    _context.Pets.Add(pet);
+                }
+                else if (petEntry.State == EntityState.Modified)
+                {
+                    petEntry.State = EntityState.Added;
+                }
+            }
+        }
+
         await _context.SaveChangesAsync();
         return order;
     }
