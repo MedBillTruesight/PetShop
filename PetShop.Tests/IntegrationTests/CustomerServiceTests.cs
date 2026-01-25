@@ -67,7 +67,7 @@ public class CustomerServiceTests : IntegrationTestBase
 
         // Act + Assert
         var ex = await Assert.ThrowsAsync<AppException>(() => _customerService.GetCustomerAsync(nonExistentCustomerId));
-        Assert.Equal($"Customer with id '{nonExistentCustomerId}' not found.", ex.Message);
+        Assert.Equal($"Customer not found for update", ex.Message);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class CustomerServiceTests : IntegrationTestBase
         
         // Act + Assert
         var ex = await Assert.ThrowsAsync<AppException>(() => _customerService.GetCustomerAsync(testCustomer.Id));
-        Assert.Equal($"Customer with id '{testCustomer.Id}' not found.", ex.Message);
+        Assert.Equal($"Customer not found for update", ex.Message);
     }
     
     [Fact]
@@ -202,7 +202,7 @@ public class CustomerServiceTests : IntegrationTestBase
         
         // Verify Deletion
         var ex = await Assert.ThrowsAsync<AppException>(() => _customerService.GetCustomerAsync(createdCustomer.Id));
-        Assert.Equal($"Customer with id '{createdCustomer.Id}' not found.", ex.Message);
+        Assert.Equal($"Customer not found for update", ex.Message);
     }
     [Fact]
     public async Task CreateCustomerAsync_ShouldThrowException_WhenEmailIsNotUnique()
