@@ -1,0 +1,16 @@
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\PetShop.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\PetShop.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\PetShop.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\PetShop.Infrastructure.AssemblyInfo.cs
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\PetShop.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\PetShop.Infrastructure.sourcelink.json
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\bin\Debug\net8.0\PetShop.Infrastructure.deps.json
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\bin\Debug\net8.0\PetShop.Infrastructure.dll
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\bin\Debug\net8.0\PetShop.Infrastructure.pdb
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\bin\Debug\net8.0\PetShop.Domain.dll
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\bin\Debug\net8.0\PetShop.Domain.pdb
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\PetShop..9FE83DD0.Up2Date
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\PetShop.Infrastructure.dll
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\refint\PetShop.Infrastructure.dll
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\PetShop.Infrastructure.pdb
+C:\Users\User\Desktop\projects\PetShop\PetShop.Infrastructure\obj\Debug\net8.0\ref\PetShop.Infrastructure.dll
