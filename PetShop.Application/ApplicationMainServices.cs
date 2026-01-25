@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using FluentValidation;
 using PetShop.Application.Features.Customers;
 using PetShop.Application.Features.Orders;
+using PetShop.Application.Features.Pets;
 using PetShop.Application.Interfaces.Mappers;
 using PetShop.Application.Interfaces.Services;
 using PetShop.Application.Mappers;
@@ -18,9 +18,6 @@ public static class ApplicationMainServices
         services.AddTransient<IOrderMapper, OrderMapper>();
         services.AddScoped<IPetService, PetService>();
         services.AddTransient<IPetMapper, PetMapper>();
-
-        // Register FluentValidation
-        services.AddValidatorsFromAssembly(typeof(ApplicationMainServices).Assembly);
 
         services.AddAutoMapper(cfg => cfg.AddMaps(typeof(CustomerMappingProfile).Assembly));
         services.AddAutoMapper(cfg => cfg.AddMaps(typeof(OrderMappingProfile).Assembly));

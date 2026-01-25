@@ -1,6 +1,7 @@
 ﻿using PetShop.Application.DTOs;
 using PetShop.Domain.Entities;
 using AutoMapper;
+using PetShop.Application.Interfaces.Mappers;
 
 namespace PetShop.Application.Mappers;
 public class CustomerMapper: ICustomerMapper

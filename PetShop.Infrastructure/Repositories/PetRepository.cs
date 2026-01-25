@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetShop.Domain.Entities;
+using PetShop.Domain.Exceptions;
 using PetShop.Domain.Interfaces.Repositories;
 using PetShop.Infrastructure.Persistence;
 
@@ -27,7 +28,7 @@ public class PetRepository : IPetRepository
 
         if (existingPet == null)
         {
-            throw new InvalidOperationException("Pet not found for update");
+            throw new AppException("Pet not found for update");
         }
 
         existingPet.Name = pet.Name;

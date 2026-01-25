@@ -7,7 +7,6 @@ using PetShop.Domain.Exceptions;
 using PetShop.Domain.Interfaces.Repositories;
 
 namespace PetShop.Application.Features.Orders;
-
 public class OrderService : IOrderService
 {
 	private readonly IOrderRepository _repository;
@@ -16,10 +15,10 @@ public class OrderService : IOrderService
 	private readonly IOrderMapper _mapper;
 	public OrderService(IOrderRepository repository, IOrderMapper mapper, ICustomerService customerService, IPetService petService)
 	{
-		_repository = repository ?? throw new ArgumentNullException(nameof(repository));
-		_mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-		_customerService = customerService ?? throw new ArgumentNullException(nameof(customerService));
-		_petService = petService ?? throw new ArgumentNullException(nameof(petService));
+		_repository = repository;
+		_mapper = mapper;
+		_customerService = customerService;
+		_petService = petService;
 	}
 
 	public async Task<OrderDto> AddOrderPetAsync(CreateOrderPetDto createOrderPetDto)
@@ -92,11 +91,11 @@ public class OrderService : IOrderService
 	{
 		var order = await _repository.GetOrderByIdAsync(id);
 
-		if (order == null) return null;
+		if (order == null) throw new AppException("Order not found.");
 
 		var customer = await _customerService.GetCustomerAsync(order.CustomerId);
 
-		OrderDto orderDto = _mapper.ToDto(order);
+		var orderDto = _mapper.ToDto(order);
 		orderDto.CustomerName = customer?.FirstName + " " + customer?.LastName;
 
 		if (orderDto.Status == OrderStatus.Delivered)

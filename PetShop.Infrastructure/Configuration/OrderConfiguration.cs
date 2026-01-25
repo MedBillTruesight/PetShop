@@ -4,7 +4,6 @@ using PetShop.Domain.Entities;
 using PetShop.Domain.Enums;
 
 namespace PetShop.Infrastructure.Configuration;
-
 public class OrderConfigurations:IEntityTypeConfiguration<Order>
 {
     public void Configure(EntityTypeBuilder<Order> builder)

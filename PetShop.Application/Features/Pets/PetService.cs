@@ -1,9 +1,10 @@
 using PetShop.Application.DTOs;
 using PetShop.Application.Interfaces.Mappers;
 using PetShop.Application.Interfaces.Services;
-using PetShop.Domain.Entities;
+using PetShop.Domain.Exceptions;
 using PetShop.Domain.Interfaces.Repositories;
 
+namespace PetShop.Application.Features.Pets;
 public class PetService : IPetService
 {
 	private readonly IPetRepository _petRepository;
@@ -34,7 +35,7 @@ public class PetService : IPetService
 	public async Task<PetDto?> GetPetAsync(Guid id)
 	{
 		var pet = await _petRepository.GetPetByIdAsync(id);
-		if (pet == null) return null;
+		if (pet == null) throw new AppException($"Pet with id '{id}' not found.");
 		return _petMapper.ToDto(pet);
 	}
 
@@ -52,17 +53,14 @@ public class PetService : IPetService
 
 		var updatedPet = await _petRepository.UpdatePetAsync(pet);
 		if (updatedPet == null)
-		{
-			return null;
-		}
-
-		return _petMapper.ToDto(updatedPet);
+			throw new AppException($"Pet with id '{id}' not found.");
+		return _petMapper.ToDto(updatedPet!);
 	}
 
 	public async Task<PetDto?> DeletePetAsync(Guid id)
 	{
 		var deletedPet = await _petRepository.DeletePetByIdAsync(id);
-		if (deletedPet == null) return null;
+		if (deletedPet == null) throw new AppException($"Pet with id '{id}' not found.");
 
 		return _petMapper.ToDto(deletedPet);
 	}
@@ -70,6 +68,6 @@ public class PetService : IPetService
 	private async Task<bool> ValidateUniqueName(string name)
 	{
 		var existingPets = await _petRepository.GetAllPetsAsync();
-		return !existingPets.Any(p => p.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase));
+		return !existingPets.Any(p => p.Name!.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase));
 	}
 }

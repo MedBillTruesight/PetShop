@@ -1,10 +1,10 @@
 ﻿using PetShop.Application.DTOs;
+using PetShop.Domain.Entities;
 
-namespace PetShop.Application.Mappers;
-
+namespace PetShop.Application.Interfaces.Mappers;
 public interface ICustomerMapper
 {
-    Domain.Entities.Customer ToDomain(CreateCustomerDto dto);
-    Domain.Entities.Customer ToDomain(UpdateCustomerDto dto);
-    CustomerDto ToDto(Domain.Entities.Customer customer);
+    Customer ToDomain(CreateCustomerDto dto);
+    Customer ToDomain(UpdateCustomerDto dto);
+    CustomerDto ToDto(Customer customer);
 }

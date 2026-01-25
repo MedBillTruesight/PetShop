@@ -1,5 +1,3 @@
-
-
 using PetShop.Application.DTOs;
 using PetShop.Domain.Entities;
 

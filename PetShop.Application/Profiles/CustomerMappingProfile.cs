@@ -2,6 +2,7 @@ using AutoMapper;
 using PetShop.Application.DTOs;
 using PetShop.Domain.Entities;
 
+namespace PetShop.Application.Profiles;
 public class CustomerMappingProfile: Profile
 {
     public CustomerMappingProfile()
