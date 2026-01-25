@@ -1,0 +1,78 @@
+using Microsoft.EntityFrameworkCore;
+using PetShop.Domain.Entities;
+using PetShop.Domain.Exceptions;
+using PetShop.Domain.Interfaces.Repositories;
+using PetShop.Infrastructure.Persistence;
+
+namespace PetShop.Infrastructure.Repositories;
+
+public class CustomerRepository : ICustomerRepository
+{
+    private readonly PetShopDbContext _context;
+
+    public CustomerRepository(PetShopDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Customer> CreateCustomerAsync(Customer customer)
+    {
+        await _context.Customers.AddAsync(customer);
+        await _context.SaveChangesAsync();
+        return customer;
+    }
+
+    public async Task<Customer?> UpdateCustomerAsync(Customer customer)
+    {
+        var existingCustomer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == customer.Id);
+
+        if (existingCustomer == null)
+        {
+            throw new AppException("Customer not found for update");
+        }
+
+        existingCustomer.FirstName = customer.FirstName;
+        existingCustomer.LastName = customer.LastName;
+        existingCustomer.Email = customer.Email;
+        existingCustomer.Phone = customer.Phone;
+        existingCustomer.Address = customer.Address;
+
+        await _context.SaveChangesAsync();
+        return existingCustomer;
+    }
+
+    public async Task<Customer?> GetCustomerByIdAsync(Guid id)
+    {
+        var existingCustomer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == id);
+
+        if (existingCustomer == null)
+        {
+            throw new AppException("Customer not found for update");
+        }
+        
+        return await _context.Customers
+            .AsNoTracking()
+            .Include(c => c.Orders)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    public async Task<Customer?> DeleteCustomerByIdAsync(Guid id)
+    {
+        var customerToDelete = await _context.Customers.FirstOrDefaultAsync(c => c.Id == id);
+
+        if (customerToDelete == null)
+        {
+            return null;
+
+        }
+
+        _context.Customers.Remove(customerToDelete);
+        await _context.SaveChangesAsync();
+        return customerToDelete;
+    }
+
+    public async Task<List<Customer>> GetAllCustomersAsync()
+    {
+        return await _context.Customers.AsNoTracking().ToListAsync();
+    }
+}

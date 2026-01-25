@@ -1,0 +1,16 @@
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\bin\Debug\net8.0\PetShop.Application.deps.json
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\bin\Debug\net8.0\PetShop.Application.dll
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\bin\Debug\net8.0\PetShop.Application.pdb
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\bin\Debug\net8.0\PetShop.Domain.dll
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\bin\Debug\net8.0\PetShop.Domain.pdb
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\PetShop.Application.csproj.AssemblyReference.cache
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\PetShop.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\PetShop.Application.AssemblyInfoInputs.cache
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\PetShop.Application.AssemblyInfo.cs
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\PetShop.Application.csproj.CoreCompileInputs.cache
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\PetShop.Application.sourcelink.json
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\PetShop..360FCE65.Up2Date
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\PetShop.Application.dll
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\refint\PetShop.Application.dll
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\PetShop.Application.pdb
+C:\Users\User\Desktop\projects\PetShop\PetShop.Application\obj\Debug\net8.0\ref\PetShop.Application.dll
