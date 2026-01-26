@@ -35,6 +35,15 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Copy published application from build stage
 COPY --from=publish /app/publish .
 
+# Create a non-root user to run the application
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Change ownership of /app to the non-root user
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
 # Expose port 7052 (can be overridden via environment variable)
 EXPOSE 7052
 
